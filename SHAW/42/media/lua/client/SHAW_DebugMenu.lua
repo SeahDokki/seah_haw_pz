@@ -71,6 +71,67 @@ local function freeCharacter()
     print("[SHAW] debug: released from any episode")
 end
 
+-- ------------------------------------------------------------- conditions --
+
+-- Four traits do not fire on a timer at all - they wait for a condition:
+-- epilepsy wants high stress or fatigue, depressive wants high depression,
+-- arthritis wants spent endurance, immunocompromised wants a wound or a bite.
+-- Reaching those honestly takes game-hours, which is not a test loop, so these
+-- put the character straight into the state under test.
+
+local function setStatMax(stat, label)
+    return function()
+        local p = player()
+        if not p then return end
+        local _, high = SHAW.statRange(stat)
+        SHAW.setStat(p, stat, high)
+        print(string.format("[SHAW] debug: %s set to %.2f", label, high))
+    end
+end
+
+local function drainEndurance()
+    local p = player()
+    if not p then return end
+    SHAW.setStat(p, CharacterStat.ENDURANCE, 0)
+    print("[SHAW] debug: endurance drained - arthritis should bite within a second")
+end
+
+local function calmDown()
+    local p = player()
+    if not p then return end
+    for _, stat in ipairs({ CharacterStat.STRESS, CharacterStat.PANIC, CharacterStat.FATIGUE,
+                            CharacterStat.UNHAPPINESS, CharacterStat.BOREDOM,
+                            CharacterStat.PAIN, CharacterStat.SICKNESS }) do
+        SHAW.setStat(p, stat, 0)
+    end
+    SHAW.setStat(p, CharacterStat.ENDURANCE, 1)
+    print("[SHAW] debug: stats reset")
+end
+
+local function scratchArm()
+    local p = player()
+    if not p then return end
+    local part = p:getBodyDamage():getBodyPart(BodyPartType.ForeArm_L)
+    if not part then return end
+    part:setScratched(true, true)
+    print("[SHAW] debug: left forearm scratched - immunocompromised should turn it septic")
+end
+
+local function infectKnox()
+    local p = player()
+    if not p then return end
+    p:getBodyDamage():setInfected(true)
+    print("[SHAW] debug: Knox infection set - immunocompromised should complete it at once")
+end
+
+local function healUp()
+    local p = player()
+    if not p then return end
+    p:getBodyDamage():RestoreToFullHealth()
+    p:getModData().SHAW_knoxForced = nil
+    print("[SHAW] debug: healed, Knox flag cleared")
+end
+
 local function refreshHandlers()
     SHAW.Tick.invalidate()
     print("[SHAW] debug: handler cache cleared")
@@ -153,6 +214,17 @@ local function buildMenu(playerIndex, context)
     trigger:addOption("Vocal tic", nil, forceTic)
     trigger:addOption("Severe cramp (next sprint)", nil, forceCramp)
     trigger:addOption("Reroll hyperfocus", nil, rerollFocus)
+
+    local condition = ISContextMenu:getNew(menu)
+    context:addSubMenu(menu:addOption("Set condition"), condition)
+    condition:addOption("Stress to max", nil, setStatMax(CharacterStat.STRESS, "stress"))
+    condition:addOption("Fatigue to max", nil, setStatMax(CharacterStat.FATIGUE, "fatigue"))
+    condition:addOption("Depression to max", nil, setStatMax(CharacterStat.UNHAPPINESS, "depression"))
+    condition:addOption("Drain endurance", nil, drainEndurance)
+    condition:addOption("Scratch left forearm", nil, scratchArm)
+    condition:addOption("Infect with Knox", nil, infectKnox)
+    condition:addOption("Reset stats", nil, calmDown)
+    condition:addOption("Heal everything", nil, healUp)
 
     local inspect = ISContextMenu:getNew(menu)
     context:addSubMenu(menu:addOption("Inspect"), inspect)

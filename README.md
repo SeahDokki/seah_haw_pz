@@ -305,41 +305,67 @@ rather than making you wait game-hours for one.
 
 ## Testing
 
-Run `python tools/i18ncheck.py` first — it catches locale drift, undefined `IGUI_SHAW_*` keys, and any sandbox option
-whose `DEFAULTS` entry has gone missing. Then:
+### Setup, once
 
 ```powershell
+python tools/i18ncheck.py     # locale drift, undefined IGUI keys, option/DEFAULTS drift
 .\deploy.ps1
 ```
 
-Launch `ProjectZomboid64ShowConsole.bat`, enable the mod, and **make a new character** — trait changes do not apply to
-an existing one. Turn on **H:AW : General → Debug logging** in the sandbox options so the debug menu and the `[SHAW]`
-console lines appear.
+Launch `ProjectZomboid64ShowConsole.bat`. In the sandbox options set **H:AW : General → Debug logging = on**, then:
 
-The order below is deliberate: it front-loads the traits whose mechanism is least certain.
+- **H:AW : Traits on/off** — leave everything on
+- **H:AW : Tuning** — drop every *gap* to its minimum: `EpilepsyCooldown 1`, `NarcolepsyMinHours 1`,
+  `NeuralgiaMinMinutes 1`, `TouretteMinMinutes 1`. Set `EDSTripChance 100`. This turns hours of waiting into seconds
+- Start a **new character** with all ten implemented traits picked — trait changes never apply to an existing one
 
-| # | Test | How | Pass looks like |
+Everything below is one right-click on the ground → **H:AW (debug)**. `Set condition` puts the character straight into
+the state a trait waits for; `Force` fires the timed ones now.
+
+### Two minutes: does anything work at all
+
+| # | Do | Pass |
+|---|---|---|
+| 1 | *Inspect → Dump modData and traits* | Every trait `registered=true`; the ten you picked `held=true` |
+| 2 | Look at the console from character load | One `active handler(s)` line, naming exactly your ten |
+
+If step 1 shows `registered=false`, nothing else will work — `registries.lua` and `SHAW_traits.txt` disagree.
+
+### Ten minutes: one line per trait
+
+Do these in order; each is a few seconds. *Reset stats* between the condition-driven ones.
+
+| Trait | Do | Pass | Watch for |
 |---|---|---|---|
-| 1 | Traits register at all | New character, right-click → *H:AW (debug)* → *Inspect* → *Dump modData and traits* | Every trait prints `registered=true`; the ones you picked print `held=true` |
-| 2 | Only your traits tick | Console on character load | One `active handler(s)` line naming only the traits you picked |
-| 3 | Seizure | *Force* → *Seizure* | Character drops, cannot act ~18s, zombies react to the noise, then a stress jolt |
-| 4 | Sleep attack | *Force* → *Sleep attack* | Drops for 30–120s. Take a hit → wakes immediately (`woken by damage`) |
-| 5 | Pain spike | *Force* → *Pain spike* | Drops ~10s, Pain moodle jumps |
-| 6 | Vocal tic | *Force* → *Vocal tic*, standing near zombies | Zombies turn toward you. **No sound — expected** |
-| 7 | Severe cramp | *Force* → *Severe cramp*, then sprint | Leg gives out, you go down, and it stays stiff and painful afterwards |
-| 8 | Hyperfocus | *Force* → *Reroll hyperfocus*, then train the named skill | `+N bonus xp (x15)` in console; that skill races, others do not |
-| 9 | **Reading ×3** | Time a skill book with and without ADHD | Roughly three times as long, not faster |
-| 10 | ADHD refusal | Raise Stress to moodle 3+, try to read | Halo text, book does not open |
-| 11 | Osteoarthritis | Fight until winded, then check *Dump stats* | Endurance drains faster; actions get slower as hand pain rises |
-| 12 | Depressive | Let depression reach moodle 3–4 and swing repeatedly | Some swings do not happen, with halo text |
-| 13 | **Knox instant turn** | Immunocompromised character, get bitten | Turns immediately, no multi-day window. **The least certain test** |
-| 14 | Wound sepsis | Immunocompromised, take any scratch | Wound flags infected within seconds, halo text |
-| 15 | Colour Blind | Single player | World goes greyscale, and stays greyscale across weather changes |
-| 16 | Per-trait switches | Turn a trait off in sandbox, reload | Its handler disappears from the `active handler(s)` line |
-| 17 | Nothing leaks | Character *without* any H:AW trait | Zero `[SHAW]` handler lines, no debug menu effects |
+| **Epileptic** | *Force → Seizure* | Drops ~18s, cannot act, zombies come, stress jolt on waking | Getting up early = the re-shove is failing |
+| **Narcoleptic** | *Force → Sleep attack* | Screen fades, asleep ~60s, world keeps moving at normal speed | **Time jumping forward = bug.** The fast-forward must not fire |
+| | then hit it while asleep | Wakes at once, "You come round" | |
+| **Neuralgia** | *Force → Pain spike* | Drops ~10s, Pain moodle jumps | |
+| **Tourette's** | *Force → Vocal tic* near zombies | Zombies turn toward you from ~18 tiles | **Silence is expected** — no audio asset yet |
+| **Ehlers-Danlos** | *Force → Severe cramp*, then sprint | Leg gives, you go down, leg stays stiff and painful | Stiffness that vanishes instantly = drag not working |
+| **Osteoarthritis** | *Set condition → Drain endurance* | Within ~1s: "Your hands seize up", then actions visibly slower | Compare a reload timed before and after |
+| **Depressive** | *Set condition → Depression to max*, swing repeatedly at a wall | Some swings just do not happen, with halo text | ~15% at max by default |
+| **ADHD** (reading) | Time a skill book, then *Reset stats* and time it on a character without ADHD | **Roughly 3× longer**, not faster | This is the bug you caught — verify the direction |
+| **ADHD** (focus) | *Force → Reroll hyperfocus*, then train the skill named in console | `+N bonus xp (x15)` lines; that skill races ahead | |
+| **ADHD** (refusal) | *Set condition → Stress to max*, try to read | Halo text, book refuses to open | |
+| **Immunocompromised** | *Set condition → Scratch left forearm* | Turns septic within ~2s, "The wound has turned" | |
+| | *Set condition → Infect with Knox* | **Turns immediately** — no multi-day window | The least certain test in the mod |
+| **Colour Blind** | Just look, in single player | World greyscale, and stays grey across a weather change | Colour returning = the weather system is winning |
 
-If a trait misbehaves, *Release from episode* frees a stuck character and *Rebuild handler list* re-resolves the
-handlers without a reload.
+### Then: does it stay clean
+
+| # | Do | Pass |
+|---|---|---|
+| 15 | Turn a trait off in sandbox, reload | It disappears from the `active handler(s)` line |
+| 16 | Make a character with **no** H:AW trait | Zero `[SHAW]` handler lines; no debug menu effects |
+| 17 | Sleep normally in a bed with all ten traits | No seizure, cramp or tic mid-sleep; you wake normally |
+
+Step 17 is the one that catches a missing `SHAW.isIncapable()` guard.
+
+### When something wedges
+
+*Release from episode* frees a stuck character. *Heal everything* clears wounds and the Knox flag. *Rebuild handler
+list* re-resolves handlers without a reload. *Reset stats* zeroes everything the traits read.
 
 ---
 
