@@ -1,0 +1,149 @@
+/*
+ * Humans: Are Weak - character traits.
+ *
+ * Cost follows the Build 42 trait convention: a POSITIVE cost spends
+ * creation points (base:brave = 4), a NEGATIVE cost grants them
+ * (base:cowardly = -2). The design bible states points from the
+ * player's side, so its numbers are the negation of these.
+ *
+ * Every id here must also appear in media/registries.lua, and both
+ * UIName and UIDescription must exist in all four
+ * media/lua/shared/Translate/<LANG>/UI.json files.
+ */
+
+module SHAW
+{
+    character_trait_definition SHAW:epileptic
+    {
+        CharacterTrait = SHAW:epileptic,
+        IsProfessionTrait = false,
+        DisabledInMultiplayer = false,
+        Cost = -12,
+        UIName = UI_trait_SHAW_Epileptic,
+        UIDescription = UI_trait_SHAW_EpilepticDesc,
+    }
+
+    character_trait_definition SHAW:narcoleptic
+    {
+        CharacterTrait = SHAW:narcoleptic,
+        IsProfessionTrait = false,
+        DisabledInMultiplayer = false,
+        Cost = -12,
+        UIName = UI_trait_SHAW_Narcoleptic,
+        UIDescription = UI_trait_SHAW_NarcolepticDesc,
+    }
+
+    character_trait_definition SHAW:diabetic
+    {
+        CharacterTrait = SHAW:diabetic,
+        IsProfessionTrait = false,
+        DisabledInMultiplayer = false,
+        Cost = -10,
+        UIName = UI_trait_SHAW_Diabetic,
+        UIDescription = UI_trait_SHAW_DiabeticDesc,
+    }
+
+    character_trait_definition SHAW:depressive
+    {
+        CharacterTrait = SHAW:depressive,
+        IsProfessionTrait = false,
+        DisabledInMultiplayer = false,
+        Cost = -6,
+        UIName = UI_trait_SHAW_Depressive,
+        UIDescription = UI_trait_SHAW_DepressiveDesc,
+    }
+
+    character_trait_definition SHAW:immunocompromised
+    {
+        CharacterTrait = SHAW:immunocompromised,
+        IsProfessionTrait = false,
+        DisabledInMultiplayer = false,
+        Cost = -6,
+        UIName = UI_trait_SHAW_Immunocompromised,
+        UIDescription = UI_trait_SHAW_ImmunocompromisedDesc,
+        MutuallyExclusiveTraits = base:pronetoillness;base:resilient;base:fasthealer,
+    }
+
+    character_trait_definition SHAW:asthmatic
+    {
+        CharacterTrait = SHAW:asthmatic,
+        IsProfessionTrait = false,
+        DisabledInMultiplayer = false,
+        Cost = -5,
+        UIName = UI_trait_SHAW_Asthmatic,
+        UIDescription = UI_trait_SHAW_AsthmaticDesc,
+        MutuallyExclusiveTraits = base:asthmatic,
+    }
+
+    character_trait_definition SHAW:ehlersdanlos
+    {
+        CharacterTrait = SHAW:ehlersdanlos,
+        IsProfessionTrait = false,
+        DisabledInMultiplayer = false,
+        Cost = -5,
+        UIName = UI_trait_SHAW_EhlersDanlos,
+        UIDescription = UI_trait_SHAW_EhlersDanlosDesc,
+    }
+
+    character_trait_definition SHAW:neuralgia
+    {
+        CharacterTrait = SHAW:neuralgia,
+        IsProfessionTrait = false,
+        DisabledInMultiplayer = false,
+        Cost = -5,
+        UIName = UI_trait_SHAW_Neuralgia,
+        UIDescription = UI_trait_SHAW_NeuralgiaDesc,
+    }
+
+    character_trait_definition SHAW:tourette
+    {
+        CharacterTrait = SHAW:tourette,
+        IsProfessionTrait = false,
+        DisabledInMultiplayer = false,
+        Cost = -5,
+        UIName = UI_trait_SHAW_Tourette,
+        UIDescription = UI_trait_SHAW_TouretteDesc,
+    }
+
+    character_trait_definition SHAW:allergy
+    {
+        CharacterTrait = SHAW:allergy,
+        IsProfessionTrait = false,
+        DisabledInMultiplayer = false,
+        Cost = -4,
+        UIName = UI_trait_SHAW_Allergy,
+        UIDescription = UI_trait_SHAW_AllergyDesc,
+    }
+
+    character_trait_definition SHAW:arthritis
+    {
+        CharacterTrait = SHAW:arthritis,
+        IsProfessionTrait = false,
+        DisabledInMultiplayer = false,
+        Cost = -4,
+        UIName = UI_trait_SHAW_Arthritis,
+        UIDescription = UI_trait_SHAW_ArthritisDesc,
+    }
+
+    character_trait_definition SHAW:adhd
+    {
+        CharacterTrait = SHAW:adhd,
+        IsProfessionTrait = false,
+        DisabledInMultiplayer = false,
+        Cost = -4,
+        UIName = UI_trait_SHAW_ADHD,
+        UIDescription = UI_trait_SHAW_ADHDDesc,
+        MutuallyExclusiveTraits = base:slowreader;base:illiterate,
+    }
+
+    character_trait_definition SHAW:colorblind
+    {
+        CharacterTrait = SHAW:colorblind,
+        IsProfessionTrait = false,
+        DisabledInMultiplayer = false,
+        Cost = -2,
+        UIName = UI_trait_SHAW_ColorBlind,
+        UIDescription = UI_trait_SHAW_ColorBlindDesc,
+    }
+
+}

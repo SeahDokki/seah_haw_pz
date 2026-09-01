@@ -1,0 +1,5 @@
+{
+    "Sandbox_SHAWGeneral": "H:AW : General",
+    "Sandbox_SHAW_Debug": "Debug logging",
+    "Sandbox_SHAW_Debug_tooltip": "Print H:AW decisions to the console. Noisy, for testing only."
+}

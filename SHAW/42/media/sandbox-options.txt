@@ -1,0 +1,26 @@
+VERSION = 1,
+
+/*
+ * Humans: Are Weak sandbox options.
+ *
+ * Option names map to SandboxVars.SHAW.<Name> in Lua. Read them through
+ * SHAW.Config.get(), never directly: the config layer applies a fallback so
+ * the mod still runs when an option is missing (older save, partial server
+ * override), and DEFAULTS there must stay in step with the `default =`
+ * lines below.
+ *
+ * Translation keys live in media/lua/shared/Translate/<LANG>/Sandbox.json as
+ * Sandbox_<translation> and Sandbox_<translation>_tooltip. JSON, and no
+ * language suffix in the filename - the folder carries the language.
+ * Adding an option means touching four places: this file, the DEFAULTS table,
+ * and the label plus tooltip in all four Sandbox.json files.
+ */
+
+option SHAW.Debug
+{
+    type = boolean,
+    default = false,
+
+    page = SHAWGeneral,
+    translation = SHAW_Debug,
+}

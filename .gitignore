@@ -1,0 +1,15 @@
+# build.ps1 and deploy.ps1 ARE tracked, unlike in the zed_plus repo. They take
+# the Zomboid folder as a -ZomboidPath parameter instead of hardcoding one, so
+# there is nothing machine-specific left in them and a fresh clone can build.
+
+# OS / editor noise
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+
+# Asset sources (originals, .psd, downloads). Only what the mod loads is
+# versioned, under SHAW/42/media/.
+Assets/
+__pycache__/
