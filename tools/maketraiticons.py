@@ -15,14 +15,18 @@ referenced in CharacterTraitDefinition but **does not ship** - the folder holds
 only 16 icons for ~90 vanilla traits, which is why most vanilla traits are
 invisible there too. So a mod that wants its traits to show has to supply art.
 
-32x32 matches the vanilla icons.
+18x18 matches the vanilla icons exactly, and that matters: both panels build
+the image at the texture's native size - ISImage:new(0, 0, tex:getWidth(),
+tex:getHeight(), tex) - so a 32x32 icon renders 32px tall in a row laid out
+for 18px and overflows next to the vanilla ones. At this size a single letter
+is all that fits; the colour family carries the rest.
 """
 import os
 import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
-SIZE = 32
+SIZE = 18
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(os.path.dirname(HERE), "SHAW", "42", "media", "ui", "Traits")
@@ -33,22 +37,23 @@ FONTS = (
     "C:/Windows/Fonts/bahnschrift.ttf",
 )
 
-# id -> (letters, colour). Colours group by what the trait does to you:
-# red = collapse, amber = chronic, violet = mind, green = body/immune.
+# id -> (letter, colour). One letter each - 18x18 fits no more - and all 13 are
+# distinct. Colour groups by what the trait does to you: red = it drops you,
+# amber = chronic ache, green = body and immunity, violet = mind.
 TRAITS = {
-    "epileptic":         ("EP", "#B4462F"),
-    "narcoleptic":       ("NA", "#B4462F"),
-    "neuralgia":         ("NE", "#B4462F"),
-    "ehlersdanlos":      ("ED", "#C08A3E"),
-    "arthritis":         ("AR", "#C08A3E"),
-    "asthmatic":         ("AS", "#C08A3E"),
-    "diabetic":          ("DI", "#4A8C7B"),
-    "immunocompromised": ("IM", "#4A8C7B"),
-    "allergy":           ("AL", "#4A8C7B"),
-    "depressive":        ("DE", "#6E6BA8"),
-    "adhd":              ("AD", "#6E6BA8"),
-    "tourette":          ("TO", "#6E6BA8"),
-    "colorblind":        ("CB", "#7A7A7A"),
+    "epileptic":         ("E", "#B4462F"),
+    "narcoleptic":       ("N", "#B4462F"),
+    "neuralgia":         ("P", "#B4462F"),
+    "ehlersdanlos":      ("H", "#C08A3E"),
+    "arthritis":         ("R", "#C08A3E"),
+    "asthmatic":         ("S", "#C08A3E"),
+    "diabetic":          ("D", "#4A8C7B"),
+    "immunocompromised": ("I", "#4A8C7B"),
+    "allergy":           ("L", "#4A8C7B"),
+    "depressive":        ("V", "#6E6BA8"),
+    "adhd":              ("A", "#6E6BA8"),
+    "tourette":          ("T", "#6E6BA8"),
+    "colorblind":        ("C", "#7A7A7A"),
 }
 
 
@@ -62,26 +67,26 @@ def font(size):
     return ImageFont.load_default()
 
 
-def draw(letters, colour):
+def draw(letter, colour):
     img = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
     pen = ImageDraw.Draw(img)
 
-    pen.ellipse([1, 1, SIZE - 2, SIZE - 2], fill=colour, outline="#12141A", width=2)
+    pen.ellipse([0, 0, SIZE - 1, SIZE - 1], fill=colour, outline="#12141A", width=1)
 
-    fnt = font(15)
-    left, top, right, bottom = pen.textbbox((0, 0), letters, font=fnt)
+    fnt = font(11)
+    left, top, right, bottom = pen.textbbox((0, 0), letter, font=fnt)
     x = (SIZE - (right - left)) / 2 - left
     y = (SIZE - (bottom - top)) / 2 - top
-    pen.text((x, y), letters, font=fnt, fill="#F2EDE6")
+    pen.text((x, y), letter, font=fnt, fill="#F2EDE6")
 
     return img
 
 
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for trait_id, (letters, colour) in sorted(TRAITS.items()):
+    for trait_id, (letter, colour) in sorted(TRAITS.items()):
         path = os.path.join(OUT, "trait_SHAW_%s.png" % trait_id)
-        draw(letters, colour).save(path, "PNG")
+        draw(letter, colour).save(path, "PNG")
         print("wrote %s" % os.path.basename(path))
     print("%d icons in %s" % (len(TRAITS), OUT))
 
