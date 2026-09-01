@@ -5,13 +5,15 @@
     the CharacterTrait table under its upper-cased id. Build 42 wants
     that handle, not a string: `player:hasTrait(SHAW.Trait.EPILEPTIC)`.
 
-    Look traits up through this table rather than touching
-    CharacterTrait directly - it is the list the rest of the mod
-    iterates, and it fails loudly here if a registration was missed.
+    Look traits up through this table rather than touching CharacterTrait
+    directly. Lookups are lazy: registries.lua runs before the script
+    files are parsed, but its order relative to media/lua/shared/ is not
+    worth relying on, and resolving on first use makes it irrelevant. A
+    missing registration warns once and returns nil rather than baking a
+    nil into the table at load time.
 ]]
 
 SHAW = SHAW or {}
-SHAW.Trait = {}
 
 local ids = {
     EPILEPTIC = "epileptic",
@@ -29,13 +31,29 @@ local ids = {
     COLORBLIND = "colorblind",
 }
 
-for name, id in pairs(ids) do
-    local handle = CharacterTrait[name]
-    if handle == nil then
-        print("[SHAW] trait not registered: SHAW:" .. id)
-    end
-    SHAW.Trait[name] = handle
-end
+local warned = {}
+
+SHAW.Trait = setmetatable({}, {
+    __index = function(self, name)
+        local id = ids[name]
+        if id == nil then
+            print("[SHAW] unknown trait: " .. tostring(name))
+            return nil
+        end
+
+        local handle = CharacterTrait[name]
+        if handle == nil then
+            if not warned[name] then
+                warned[name] = true
+                print("[SHAW] trait not registered: SHAW:" .. id)
+            end
+            return nil
+        end
+
+        rawset(self, name, handle)
+        return handle
+    end,
+})
 
 --- True when `player` carries one of this mod's traits.
 function SHAW.has(player, trait)
@@ -43,7 +61,7 @@ function SHAW.has(player, trait)
     return player:hasTrait(trait)
 end
 
---- The ids this mod defines, for iteration and debug output.
+--- The ids this mod defines, keyed by handle name. For iteration.
 function SHAW.traitIds()
     return ids
 end
