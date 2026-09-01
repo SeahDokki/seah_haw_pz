@@ -154,7 +154,13 @@ local function apply(player, data)
 end
 
 --- Damage forces you awake. Hooked rather than polled so it is immediate.
-local function onDamage(player)
+---
+--- OnPlayerGetDamage fires for ANY character that takes damage, zombies
+--- included - it is raised from IsoGameCharacter/BodyDamage, not just from
+--- IsoPlayer. Shoving a zombie handed this an IsoZombie and getPlayerNum()
+--- errored. SHAW.asLocalPlayer filters that out.
+local function onDamage(candidate)
+    local player = SHAW.asLocalPlayer(candidate)
     if not player or not inEpisode(player) then return end
     wake(player)
     SHAW.log("narcolepsy: woken by damage")

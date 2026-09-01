@@ -44,9 +44,9 @@
     "Sandbox_SHAW_TouretteMaxMinutes_tooltip": "Intervalo de juego más largo entre tics vocales. Debe superar el intervalo mínimo.",
     "Sandbox_SHAW_TouretteRadius": "Tourette: radio del tic (casillas)",
     "Sandbox_SHAW_TouretteRadius_tooltip": "Alcance de un tic vocal. La biblia indica 15-20 casillas, como un grito humano.",
-    "Sandbox_SHAW_ApathyChance": "Depresivo: probabilidad de apatía (%)",
+    "Sandbox_SHAW_ApathyChance": "Depresivo: probabilidad de apatía (%%)",
     "Sandbox_SHAW_ApathyChance_tooltip": "Probabilidad de que un golpe simplemente no ocurra, con depresión máxima. Baja al bajar la depresión.",
-    "Sandbox_SHAW_ADHDReadingPercent": "TDAH: tiempo de lectura (%)",
+    "Sandbox_SHAW_ADHDReadingPercent": "TDAH: tiempo de lectura (%%)",
     "Sandbox_SHAW_ADHDReadingPercent_tooltip": "Duración de la lectura como porcentaje de lo normal. 300 significa tres veces más.",
     "Sandbox_SHAW_ADHDFocusMultiplier": "TDAH: multiplicador de XP en hiperfoco",
     "Sandbox_SHAW_ADHDFocusMultiplier_tooltip": "Multiplicador de XP en la habilidad en hiperfoco. La biblia indica 15.",
@@ -54,8 +54,8 @@
     "Sandbox_SHAW_ADHDFocusHours_tooltip": "Horas de juego que el hiperfoco permanece en una habilidad antes de sortear otra.",
     "Sandbox_SHAW_ADHDStressThreshold": "TDAH: nivel de estrés que bloquea acciones",
     "Sandbox_SHAW_ADHDStressThreshold_tooltip": "Nivel del moodle Estrés (0-4) a partir del cual el personaje se niega a leer, esperar o dormir. 4 desactiva el rechazo.",
-    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos: probabilidad de calambre severo (%)",
+    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos: probabilidad de calambre severo (%%)",
     "Sandbox_SHAW_EDSTripChance_tooltip": "Probabilidad, por fase de sprint, de sufrir un calambre severo en una pierna. Se sortea una vez por sprint continuo, no por fotograma.",
-    "Sandbox_SHAW_ColorBlindStrength": "Daltónico: desaturación (%)",
+    "Sandbox_SHAW_ColorBlindStrength": "Daltónico: desaturación (%%)",
     "Sandbox_SHAW_ColorBlindStrength_tooltip": "Cuán gris se vuelve el mundo. 100 es escala de grises completa. Solo un jugador - ver el README."
 }

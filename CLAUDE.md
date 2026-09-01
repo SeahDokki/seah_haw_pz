@@ -175,12 +175,33 @@ second is silent to the horde. `SHAW.makeNoise()` and `SHAW.playSound()` wrap th
 hook, already applying unhappiness, drunkenness, hand pain and body temperature. Wrap the *specific* action's copy
 (`ISReadABook.adjustMaxTime`), never the base class, or every action in the game changes.
 
-**`Events.AddXP` is a notification, not a filter.** It fires after the XP has landed, with `(character, perk, amount)`.
-You cannot multiply the incoming amount; you can only top up with `getXp():AddXPNoMultiplier(perk, extra)` - and that
-re-raises the same event, so a re-entrancy guard is mandatory. See `SHAW_ADHD.lua`.
+**To boost a skill visibly, use `addXpMultiplier`, not `Events.AddXP`.** `Events.AddXP` is a notification, not a
+filter: it fires after the XP has landed, with `(character, perk, amount)`, so the most you can do is top up with
+`getXp():AddXPNoMultiplier()` - which re-raises the same event and needs a re-entrancy guard. Worse, it is **invisible**:
+the skill panel shows no multiplier and no arrows, so the player cannot tell the boost exists. ADHD shipped that way
+once and it read as broken.
 
-**Perk identity is `perk:getId()`.** `getName()` is the translated display name and must never be persisted or
-compared.
+`addXpMultiplier(character, perk, multiplier, minLevel, maxLevel)` is what a read skill book calls (`ISReadABook.
+checkMultiplier`). It fills the "Multiplier" column, draws the arrows, and replicates over the network via
+`AddXPMultiplierPacket`. It is a Lua global from `LuaManager$GlobalObject`. The engine consumes multipliers as the
+skill levels, so re-assert it periodically, and only raise it - never trample a bigger boost the player earned.
+
+**A perk has no round-trippable string identity.** `perk:getId()` is not what `Perks.FromString()` accepts, and
+`getName()` is translated. Never persist either. `addXpMultiplier` and `getXp():getMultiplier()` both want the
+**`Perks` enum value** (`Perks.Woodwork`), the same thing `SkillBook[...].perk` holds. `SHAW_ADHD.lua` therefore stores
+an index into its own append-only `FOCUSABLE` list, and `PerkFactory.getPerk(perkEnum):getName()` is used for display
+only.
+
+**Event arguments are not necessarily the local player.** `Events.OnPlayerGetDamage` is raised from
+`IsoGameCharacter`, `BodyDamage` and `BodyPart`, so it fires for **any** character that takes damage - shoving a zombie
+hands the handler an `IsoZombie`, and `getPlayerNum()` on that is a hard error. It crashed narcolepsy's wake-up handler
+on the first playtest. Every handler outside the tick dispatcher goes through `SHAW.asLocalPlayer()` or
+`SHAW.eventPlayer()` in Core, which check `instanceof(x, "IsoPlayer")` and `isLocalPlayer()`.
+
+**A bare `%` in a translated string is a crash.** PZ runs every string through a Java `Formatter`, so `"(%)"` throws
+`UnknownFormatConversionException: Conversion = ')'` and the label renders broken. Vanilla escapes it as `%%`
+(`"10%%"`, `"300%%"`). Four sandbox labels shipped with `(%)` and broke in game. `tools/i18ncheck.py` now rejects any
+`%` that is not `%%` or a positional `%1`..`%9`.
 
 **There is no way to disable player input.** `setBlockMovement` exists only on animal behaviour. The reachable
 approximation is the shove the engine uses when a zombie pushes you, re-applied on a timer:
@@ -372,7 +393,7 @@ data.SHAW_neuralgiaNext         -- hour  : next pain spike is due at
 data.SHAW_touretteNext          -- hour  : next vocal tic is due at
 
 -- adhd
-data.SHAW_tdahFocusSkill        -- string: perk:getId() currently in hyperfocus
+data.SHAW_tdahFocusIndex        -- int   : index into FOCUSABLE in SHAW_ADHD.lua (append-only)
 data.SHAW_tdahFocusTimer        -- hour  : focus rotates at
 
 -- depressive / immunocompromised / ehlers-danlos

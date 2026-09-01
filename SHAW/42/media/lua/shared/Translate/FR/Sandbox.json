@@ -44,9 +44,9 @@
     "Sandbox_SHAW_TouretteMaxMinutes_tooltip": "Intervalle de jeu le plus long entre deux tics vocaux. Doit être supérieur à l'intervalle minimal.",
     "Sandbox_SHAW_TouretteRadius": "Tourette : rayon du tic (cases)",
     "Sandbox_SHAW_TouretteRadius_tooltip": "Portée d'un tic vocal. La bible indique 15-20 cases, comme un cri humain.",
-    "Sandbox_SHAW_ApathyChance": "Dépressif : chance d'apathie (%)",
+    "Sandbox_SHAW_ApathyChance": "Dépressif : chance d'apathie (%%)",
     "Sandbox_SHAW_ApathyChance_tooltip": "Chance qu'une attaque n'ait tout simplement pas lieu, à dépression maximale. Diminue quand la dépression baisse.",
-    "Sandbox_SHAW_ADHDReadingPercent": "TDAH : temps de lecture (%)",
+    "Sandbox_SHAW_ADHDReadingPercent": "TDAH : temps de lecture (%%)",
     "Sandbox_SHAW_ADHDReadingPercent_tooltip": "Durée de la lecture en pourcentage de la normale. 300 signifie trois fois plus long.",
     "Sandbox_SHAW_ADHDFocusMultiplier": "TDAH : multiplicateur d'XP en hyperfocus",
     "Sandbox_SHAW_ADHDFocusMultiplier_tooltip": "Multiplicateur d'XP sur la compétence en hyperfocus. La bible indique 15.",
@@ -54,8 +54,8 @@
     "Sandbox_SHAW_ADHDFocusHours_tooltip": "Heures de jeu pendant lesquelles l'hyperfocus reste sur une compétence avant d'en tirer une autre.",
     "Sandbox_SHAW_ADHDStressThreshold": "TDAH : niveau de stress bloquant les actions",
     "Sandbox_SHAW_ADHDStressThreshold_tooltip": "Niveau du moodle Stress (0-4) à partir duquel le personnage refuse de lire, attendre ou dormir. 4 désactive le refus.",
-    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos : chance de courbature sévère (%)",
+    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos : chance de courbature sévère (%%)",
     "Sandbox_SHAW_EDSTripChance_tooltip": "Chance, par phase de sprint, qu'une jambe se bloque d'une courbature sévère. Tirée une fois par sprint continu, pas par frame.",
-    "Sandbox_SHAW_ColorBlindStrength": "Daltonien : désaturation (%)",
+    "Sandbox_SHAW_ColorBlindStrength": "Daltonien : désaturation (%%)",
     "Sandbox_SHAW_ColorBlindStrength_tooltip": "Degré de gris du monde. 100 = niveaux de gris complets. Solo uniquement - voir le README."
 }

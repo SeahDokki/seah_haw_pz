@@ -20,10 +20,8 @@
        file wraps ISReadABook's copy rather than touching the base class, so
        nothing but reading is affected.
 
-    2. Events.AddXP fires AFTER the XP has landed, so it cannot filter - it can
-       only top up. The handler adds the difference with AddXPNoMultiplier and
-       guards against re-entry, because the top-up would otherwise re-fire the
-       same event forever.
+    2. addXpMultiplier() - the same call a read skill book makes. See the note on
+       applyFocusMultiplier below for why this replaced an earlier approach.
 
     3. Plain stat pushes on STRESS and BOREDOM.
 
@@ -42,6 +40,14 @@ SHAW = SHAW or {}
 -- Skills the hyperfocus can land on. A curated list rather than iterating
 -- PerkFactory.PerkList, because that list also carries the container entries
 -- (Perks.None, Perks.Combat, Perks.MAX) which are not trainable skills.
+--
+-- These are Perks enum values, which is what addXpMultiplier() and
+-- getXp():getMultiplier() take - the same thing SkillBook entries hold.
+--
+-- APPEND ONLY. modData stores the *index* into this list, not a name: perk
+-- identity has no round-trippable string (getId() is not what
+-- Perks.FromString() accepts, and getName() is translated). Reordering this
+-- list would silently repoint every saved character's hyperfocus.
 local FOCUSABLE = {
     Perks.Aiming, Perks.Axe, Perks.Blacksmith, Perks.Blunt, Perks.Butchering,
     Perks.Carving, Perks.Cooking, Perks.Doctor, Perks.Electricity,
@@ -56,66 +62,108 @@ local FOCUSABLE = {
 local STRESS_PER_TICK = 0.0022
 local BOREDOM_PER_TICK = 0.11      -- BOREDOM runs 0..100
 
--- Set while topping XP up, so the AddXP the top-up itself raises is ignored.
-local reentering = false
-
 local function hasADHD(player)
-    if not player or player:isDead() then return false end
-    if not SHAW.Config.get("EnableADHD") then return false end
-    local handle = SHAW.Trait.ADHD
-    return handle ~= nil and player:hasTrait(handle)
+    return SHAW.eventPlayer(player, "ADHD", "EnableADHD") ~= nil
+end
+
+--- Display name of a focus entry, for halo text and the log.
+local function perkName(perkEnum)
+    if not perkEnum then return "?" end
+    local ok, name = pcall(function()
+        return PerkFactory.getPerk(perkEnum):getName()
+    end)
+    return ok and name or "?"
 end
 
 -- ------------------------------------------------------------- hyperfocus --
 
---- Roll a new focus skill and remember when it should rotate again.
-local function rollFocus(player, data)
-    local perk = SHAW.pick(FOCUSABLE)
-    if not perk then return end
+--[[
+    Push the hyperfocus into the engine's own XP-multiplier system.
 
-    data.SHAW_tdahFocusSkill = perk:getId()
-    data.SHAW_tdahFocusTimer = SHAW.hours() + (SHAW.Config.get("ADHDFocusHours") or 6)
+    The first version topped XP up after the fact, on Events.AddXP, with
+    AddXPNoMultiplier. It produced the right numbers and was completely
+    invisible: the skill panel showed no multiplier and no arrows, so there was
+    no way to tell which skill was in hyperfocus or that the trait did anything
+    at all.
 
-    SHAW.sayGood(player, "IGUI_SHAW_FocusShift")
-    SHAW.log("adhd: hyperfocus now on %s", tostring(data.SHAW_tdahFocusSkill))
+    addXpMultiplier() is what a read skill book calls (ISReadABook.
+    checkMultiplier). It is what fills the "Multiplier" column and draws the
+    arrows in the skills panel, it is a Lua global from LuaManager$GlobalObject,
+    and it replicates in multiplayer via AddXPMultiplierPacket - so the server
+    agrees rather than a client inventing XP.
+
+    Signature: addXpMultiplier(character, perk, multiplier, minLevel, maxLevel)
+]]
+local function applyFocusMultiplier(player, data)
+    local index = data.SHAW_tdahFocusIndex
+    local perkEnum = index and FOCUSABLE[index]
+    if not perkEnum then return end
+
+    local multiplier = SHAW.Config.get("ADHDFocusMultiplier") or 15
+    if multiplier <= 1 then return end
+
+    -- Only ever raise it, so a bigger boost the player earned from a book is
+    -- never trampled by this trait.
+    local current = 0
+    pcall(function() current = player:getXp():getMultiplier(perkEnum) or 0 end)
+    if current >= multiplier then return end
+
+    -- 0..10 covers the whole skill, unlike a book's narrow level band.
+    local ok, err = pcall(function()
+        addXpMultiplier(player, perkEnum, multiplier, 0, 10)
+    end)
+
+    if ok then
+        SHAW.log("adhd: hyperfocus x%d on %s (was x%.1f)",
+                 multiplier, perkName(perkEnum), current)
+    else
+        SHAW.log("adhd: addXpMultiplier failed: %s", tostring(err))
+    end
 end
 
---- Rotate the focus when its time is up. Runs on the slow loop.
+--- Drop the multiplier off the skill that is no longer the focus, so the arrows
+--- follow the focus instead of accumulating on every skill it ever landed on.
+local function clearFocusMultiplier(player, index)
+    local perkEnum = index and FOCUSABLE[index]
+    if not perkEnum then return end
+    pcall(function()
+        addXpMultiplier(player, perkEnum, 0, 0, 10)
+    end)
+end
+
+--- Roll a new focus skill and remember when it should rotate again.
+local function rollFocus(player, data)
+    local previous = data.SHAW_tdahFocusIndex
+
+    local index = ZombRand(#FOCUSABLE) + 1
+    -- Do not sit on the same skill twice in a row; the rotation is the trait.
+    if #FOCUSABLE > 1 and index == previous then
+        index = (index % #FOCUSABLE) + 1
+    end
+
+    if previous and previous ~= index then
+        clearFocusMultiplier(player, previous)
+    end
+
+    data.SHAW_tdahFocusIndex = index
+    data.SHAW_tdahFocusTimer = SHAW.hours() + (SHAW.Config.get("ADHDFocusHours") or 6)
+
+    applyFocusMultiplier(player, data)
+
+    HaloTextHelper.addGoodText(player,
+        getText("IGUI_SHAW_FocusShift") .. ": " .. perkName(FOCUSABLE[index]))
+end
+
+--- Rotate the focus when its time is up, and keep the multiplier topped up in
+--- between - the engine consumes multipliers as the skill levels.
 local function rotate(player, data)
     local now = SHAW.hours()
     local due = data.SHAW_tdahFocusTimer
 
     if due == nil or due > now + 200 or now >= due then
         rollFocus(player, data)
-    end
-end
-
---- Top up XP for the focused skill. Events.AddXP is a notification, so this
---- adds the remainder rather than replacing the original amount.
-local function onAddXP(player, perk, amount)
-    if reentering then return end
-    if not perk or not amount or amount <= 0 then return end
-    if not hasADHD(player) then return end
-
-    local data = player:getModData()
-    local focus = data.SHAW_tdahFocusSkill
-    if not focus or perk:getId() ~= focus then return end
-
-    local multiplier = SHAW.Config.get("ADHDFocusMultiplier") or 15
-    if multiplier <= 1 then return end
-
-    local extra = amount * (multiplier - 1)
-
-    reentering = true
-    local ok, err = pcall(function()
-        player:getXp():AddXPNoMultiplier(perk, extra)
-    end)
-    reentering = false
-
-    if ok then
-        SHAW.log("adhd: %s +%.1f bonus xp (x%d)", focus, extra, multiplier)
     else
-        SHAW.log("adhd: xp top-up failed: %s", tostring(err))
+        applyFocusMultiplier(player, data)
     end
 end
 
@@ -127,7 +175,7 @@ local function apply(player, data)
     SHAW.addStat(player, CharacterStat.STRESS, STRESS_PER_TICK)
     SHAW.addStat(player, CharacterStat.BOREDOM, BOREDOM_PER_TICK)
 
-    if data.SHAW_tdahFocusSkill == nil then
+    if data.SHAW_tdahFocusIndex == nil then
         rollFocus(player, data)
     end
 end
@@ -175,4 +223,11 @@ SHAW.Tick.registerSlow{
     fn = rotate,
 }
 
-Events.AddXP.Add(onAddXP)
+--- Re-assert the multiplier on load: it lives on the character, not in our
+--- modData, so a reload can come back without it.
+Events.OnCreatePlayer.Add(function(playerNum)
+    local player = getSpecificPlayer(playerNum)
+    if hasADHD(player) then
+        applyFocusMultiplier(player, player:getModData())
+    end
+end)

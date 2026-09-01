@@ -44,9 +44,9 @@
     "Sandbox_SHAW_TouretteMaxMinutes_tooltip": "Längster Spielabstand zwischen Lauttics. Muss über dem kürzesten Abstand liegen.",
     "Sandbox_SHAW_TouretteRadius": "Tourette: Lärmradius des Tics (Felder)",
     "Sandbox_SHAW_TouretteRadius_tooltip": "Reichweite eines Lauttics. Die Bibel nennt 15-20 Felder, wie ein menschlicher Schrei.",
-    "Sandbox_SHAW_ApathyChance": "Depressiv: Apathie-Chance (%)",
+    "Sandbox_SHAW_ApathyChance": "Depressiv: Apathie-Chance (%%)",
     "Sandbox_SHAW_ApathyChance_tooltip": "Chance, dass ein Schlag einfach ausbleibt, bei maximaler Depression. Sinkt mit der Depression.",
-    "Sandbox_SHAW_ADHDReadingPercent": "ADHS: Lesezeit (%)",
+    "Sandbox_SHAW_ADHDReadingPercent": "ADHS: Lesezeit (%%)",
     "Sandbox_SHAW_ADHDReadingPercent_tooltip": "Lesedauer in Prozent des Normalwerts. 300 bedeutet dreimal so lange.",
     "Sandbox_SHAW_ADHDFocusMultiplier": "ADHS: XP-Multiplikator im Hyperfokus",
     "Sandbox_SHAW_ADHDFocusMultiplier_tooltip": "XP-Multiplikator für die Fertigkeit im Hyperfokus. Die Bibel nennt 15.",
@@ -54,8 +54,8 @@
     "Sandbox_SHAW_ADHDFocusHours_tooltip": "Spielstunden, die der Hyperfokus auf einer Fertigkeit bleibt, bevor eine andere gewürfelt wird.",
     "Sandbox_SHAW_ADHDStressThreshold": "ADHS: Stresslevel, das Aktionen blockiert",
     "Sandbox_SHAW_ADHDStressThreshold_tooltip": "Stress-Moodle-Level (0-4), ab dem die Figur sich weigert zu lesen, zu warten oder zu schlafen. 4 deaktiviert die Weigerung.",
-    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos: Chance auf schweren Krampf (%)",
+    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos: Chance auf schweren Krampf (%%)",
     "Sandbox_SHAW_EDSTripChance_tooltip": "Chance pro Sprintphase, dass ein Bein schwer verkrampft. Einmal pro durchgehendem Sprint gewürfelt, nicht pro Frame.",
-    "Sandbox_SHAW_ColorBlindStrength": "Farbenblind: Entsättigung (%)",
+    "Sandbox_SHAW_ColorBlindStrength": "Farbenblind: Entsättigung (%%)",
     "Sandbox_SHAW_ColorBlindStrength_tooltip": "Wie grau die Welt wird. 100 ist reines Grau. Nur Einzelspieler - siehe README."
 }

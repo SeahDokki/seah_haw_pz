@@ -64,6 +64,31 @@ for name in ("Sandbox", "IG_UI", "UI"):
 
     print("%-8s %d keys x %d locales" % (name, len(reference), len(keys_by_lang)))
 
+# ------------------------------------------------------ percent escaping --
+
+# PZ runs every translated string through a Java Formatter, so a bare "%" is
+# read as a format conversion. "(%)" throws
+# UnknownFormatConversionException: Conversion = ')' and the label renders
+# broken in game. Vanilla escapes it as "%%" ("10%%", "300%%").
+# A "%" is only legal as "%%" or as a positional argument "%1".."%9".
+BAD_PERCENT = re.compile(r"%(?![%1-9])")
+
+for lang in LANGS:
+    for name in ("Sandbox", "IG_UI", "UI"):
+        path = os.path.join(ROOT, lang, "%s.json" % name)
+        if not os.path.exists(path):
+            continue
+        data = json.load(io.open(path, encoding="utf-8"))
+        for key, value in sorted(data.items()):
+            if not isinstance(value, str):
+                continue
+            # Skip the doubled form before testing what is left.
+            if BAD_PERCENT.search(value.replace("%%", "")):
+                fail("unescaped %% in %s/%s -> %s : %r"
+                     % (lang, name, key, value))
+
+print("percent   every %% in the locale files is escaped or positional")
+
 # ------------------------------------------------------- sandbox coverage --
 
 options = io.open(OPTIONS_FILE, encoding="utf-8").read()

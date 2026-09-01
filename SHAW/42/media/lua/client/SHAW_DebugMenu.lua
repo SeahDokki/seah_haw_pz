@@ -143,7 +143,7 @@ local TRACKED = {
     "SHAW_epilepsyLastCrisis", "SHAW_epilepsyIrritation", "SHAW_epilepsyTvTimer",
     "SHAW_narcoSleepTimer", "SHAW_narcoSleepDuration",
     "SHAW_neuralgiaNext", "SHAW_touretteNext",
-    "SHAW_tdahFocusSkill", "SHAW_tdahFocusTimer",
+    "SHAW_tdahFocusIndex", "SHAW_tdahFocusTimer",
     "SHAW_lastUnhappiness", "SHAW_knoxForced", "SHAW_edsSprintRolled",
     "SHAW_arthritisAnnounced",
 }

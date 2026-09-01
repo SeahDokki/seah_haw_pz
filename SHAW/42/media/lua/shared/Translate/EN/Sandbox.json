@@ -44,9 +44,9 @@
     "Sandbox_SHAW_TouretteMaxMinutes_tooltip": "Longest in-game gap between vocal tics. Must be above the shortest gap.",
     "Sandbox_SHAW_TouretteRadius": "Tourette's: tic noise radius (tiles)",
     "Sandbox_SHAW_TouretteRadius_tooltip": "How far a vocal tic carries. The bible says 15-20 tiles, the same as a human shout.",
-    "Sandbox_SHAW_ApathyChance": "Depressive: apathy chance (%)",
+    "Sandbox_SHAW_ApathyChance": "Depressive: apathy chance (%%)",
     "Sandbox_SHAW_ApathyChance_tooltip": "Chance that a swing simply does not happen, at maximum depression. Scales down as depression falls.",
-    "Sandbox_SHAW_ADHDReadingPercent": "ADHD: reading time (%)",
+    "Sandbox_SHAW_ADHDReadingPercent": "ADHD: reading time (%%)",
     "Sandbox_SHAW_ADHDReadingPercent_tooltip": "How long reading takes, as a percentage of normal. 300 means three times as long.",
     "Sandbox_SHAW_ADHDFocusMultiplier": "ADHD: hyperfocus XP multiplier",
     "Sandbox_SHAW_ADHDFocusMultiplier_tooltip": "XP multiplier on the one skill currently in hyperfocus. The bible says 15.",
@@ -54,8 +54,8 @@
     "Sandbox_SHAW_ADHDFocusHours_tooltip": "In-game hours the hyperfocus stays on one skill before rolling another.",
     "Sandbox_SHAW_ADHDStressThreshold": "ADHD: stress level that blocks actions",
     "Sandbox_SHAW_ADHDStressThreshold_tooltip": "Stress moodle level (0-4) at which the character refuses to read, wait or sleep. 4 disables the refusal.",
-    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos: severe cramp chance (%)",
+    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos: severe cramp chance (%%)",
     "Sandbox_SHAW_EDSTripChance_tooltip": "Chance per sprinting spell that a leg cramps severely. Rolled once per continuous sprint, not per frame.",
-    "Sandbox_SHAW_ColorBlindStrength": "Colour Blind: desaturation (%)",
+    "Sandbox_SHAW_ColorBlindStrength": "Colour Blind: desaturation (%%)",
     "Sandbox_SHAW_ColorBlindStrength_tooltip": "How grey the world goes. 100 is fully greyscale. Single player only - see the README."
 }

@@ -152,6 +152,50 @@ function SHAW.moodle(player, moodleType)
     return moodles:getMoodleLevel(moodleType) or 0
 end
 
+-- ------------------------------------------------------------ event args --
+
+--[[
+    Never trust an event's first argument to be the local player.
+
+    Events.OnPlayerGetDamage is fired from IsoGameCharacter, BodyDamage and
+    BodyPart - so it fires for **any** character that takes damage, zombies
+    included, despite the name. Shoving a zombie hands the handler an IsoZombie,
+    and calling getPlayerNum() on that is a hard error. That crashed the
+    narcolepsy wake-up handler on the first playtest.
+
+    Every event handler outside the tick dispatcher goes through these.
+]]
+
+--- Return `candidate` only if it is genuinely a local player, else nil.
+function SHAW.asLocalPlayer(candidate)
+    if not candidate then return nil end
+    if not instanceof(candidate, "IsoPlayer") then return nil end
+    if candidate.isLocalPlayer and not candidate:isLocalPlayer() then return nil end
+    if candidate:isDead() then return nil end
+    return candidate
+end
+
+--- Resolve an event argument to a local player who carries `traitName` with
+--- `option` enabled. Returns nil unless all of that holds, so a handler can
+--- open with a single guarded line.
+function SHAW.eventPlayer(candidate, traitName, option)
+    local player = SHAW.asLocalPlayer(candidate)
+    if not player then return nil end
+
+    if option and SHAW.Config and not SHAW.Config.get(option) then
+        return nil
+    end
+
+    if traitName then
+        local handle = SHAW.Trait and SHAW.Trait[traitName]
+        if not handle or not player:hasTrait(handle) then
+            return nil
+        end
+    end
+
+    return player
+end
+
 -- ------------------------------------------------------------- incapacity --
 
 --- True when the character is in no state to be acted on: knocked down by a

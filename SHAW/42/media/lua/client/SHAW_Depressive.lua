@@ -57,12 +57,11 @@ end
 
 --- Apathy: past the threshold, some swings simply do not happen.
 --- Hooked on the attack rather than polled, so it costs nothing when idle.
-local function onApathy(player)
-    if not player or player:isDead() then return end
-    if not SHAW.Config.get("EnableDepressive") then return end
-
-    local handle = SHAW.Trait.DEPRESSIVE
-    if not handle or not player:hasTrait(handle) then return end
+--- OnWeaponSwing is not guaranteed to hand us a local player either, so the
+--- argument is validated the same way OnPlayerGetDamage has to be.
+local function onApathy(candidate)
+    local player = SHAW.eventPlayer(candidate, "DEPRESSIVE", "EnableDepressive")
+    if not player then return end
 
     local level = SHAW.moodle(player, MoodleType.UNHAPPY)
     if level < APATHY_FROM_LEVEL then return end
