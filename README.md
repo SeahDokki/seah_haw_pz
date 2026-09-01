@@ -164,7 +164,12 @@ Sprinting carries a chance that a leg **cramps severely** and gives out under yo
 at its maximum for a few seconds, and the leg stays stiff and painful long after you get up. Soreness heals more slowly
 than it should.
 
-The cramp is rolled once per continuous sprint, not per frame, so sprinting is a gamble rather than an impossibility.
+The cramp is rolled repeatedly while you hold sprint, so the risk scales with how long you run — a short dash stays
+mostly safe. Jogging never triggers it.
+
+**Sitting still is the other half.** Held in one position too long, the hips and legs stiffen into light soreness —
+noticeably worse on the ground than in a chair. It is slow and mild by design: a nuisance that makes you get up and
+move, not a second cramp.
 
 > The design originally called for sprains. **Sprains do not exist in Build 42** — there is no such injury in the API
 > at all. Severe muscle soreness is what the engine actually models, and it behaves the way the design wanted: it

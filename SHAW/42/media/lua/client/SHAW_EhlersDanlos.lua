@@ -24,6 +24,12 @@
     landing. On a cadence, risk scales with how long you hold sprint, a short
     dash stays mostly safe, and jogging is never affected (isSprinting only).
 
+    Sitting still is the other half. Hypermobile joints stiffen when held in one
+    position, so a long sit builds light soreness in the hips and legs - worse on
+    the ground than in a chair, where there is no back support and the hips fold
+    further. It is deliberately slow and mild: a nuisance that makes you get up,
+    not a second cramp.
+
     Still not implemented: the bible also wants raised light-fracture chance on
     impacts generally. That needs a damage hook and is tracked in the README.
 ]]
@@ -39,6 +45,60 @@ local CRAMP_PAIN = 40
 
 -- How often the cramp is rolled while sprinting, in real milliseconds.
 local ROLL_EVERY_MS = 1500
+
+-- ------------------------------------------------------------ sitting still --
+--
+-- Hypermobile joints do not like being held in one position either, so sitting
+-- too long stiffens them up. Light and slow - a nuisance that makes you get up
+-- and move, not a second cramp. Sitting on the ground is worse than a chair,
+-- because there is no back support and the hips are folded further.
+
+local SIT_GRACE_MS = 45000       -- how long you can sit before it starts
+local SIT_TO_FULL_MS = 240000    -- how long from there to the ceiling
+
+local SIT_STIFFNESS = 30         -- ceiling on furniture
+local SIT_PAIN = 10
+local GROUND_MULTIPLIER = 1.8    -- on the floor it bites harder and sooner
+
+-- Hips and thighs: what a folded seated posture actually loads. There is no
+-- torso or back BodyPartType in Build 42, so Groin is as close to the lower
+-- back as the model gets.
+local SEATED_PARTS = {
+    BodyPartType.Groin,
+    BodyPartType.UpperLeg_L, BodyPartType.UpperLeg_R,
+    BodyPartType.LowerLeg_L, BodyPartType.LowerLeg_R,
+}
+
+-- playerNum -> real ms when the current sit began. Transient by nature.
+local satDown = {}
+
+--- Stiffen up while seated; forget it the moment they stand.
+local function sitting(player)
+    local num = player:getPlayerNum()
+    local onGround = player:isSitOnGround()
+    local seated = onGround or player:isSittingOnFurniture()
+
+    if not seated then
+        satDown[num] = nil
+        return
+    end
+
+    local now = getTimestampMs()
+    if not satDown[num] then
+        satDown[num] = now
+        return
+    end
+
+    local held = now - satDown[num] - SIT_GRACE_MS
+    if held <= 0 then return end
+
+    local progress = SHAW.clamp(held / SIT_TO_FULL_MS, 0, 1)
+    local scale = onGround and GROUND_MULTIPLIER or 1
+
+    SHAW.Soreness.raise(player, SEATED_PARTS,
+                        SIT_STIFFNESS * progress * scale,
+                        SIT_PAIN * progress * scale)
+end
 
 -- How much of the engine's stiffness recovery is handed back each tick.
 local RECOVERY_DRAG = 0.5
@@ -69,6 +129,8 @@ local function apply(player, data)
     end
 
     if SHAW.isIncapable(player) then return end
+
+    sitting(player)
 
     -- The debug menu arms a guaranteed cramp for the next sprint.
     local forced = data.SHAW_edsForce
@@ -113,6 +175,10 @@ local function apply(player, data)
         SHAW.Soreness.dragRecovery(player, leg, data.SHAW_edsStiffness, RECOVERY_DRAG)
     end
 end
+
+Events.OnCreatePlayer.Add(function()
+    satDown = {}
+end)
 
 SHAW.Tick.register{
     id = "ehlersdanlos",
