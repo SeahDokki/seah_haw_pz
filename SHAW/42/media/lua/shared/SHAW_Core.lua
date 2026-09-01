@@ -260,9 +260,21 @@ end
 
 -- ------------------------------------------------------------------- logs --
 
---- Debug print, gated on the sandbox option so it costs nothing when off.
+--- Is debug output and tooling on?
+---
+--- Two ways in, and the second matters: sandbox options cannot be changed on an
+--- existing save, so gating on the option alone means "make a new character to
+--- get any diagnostics". isDebugEnabled() is the game's own -debug launch flag.
+--- The debug context menu uses this same predicate, so the menu and the log are
+--- never on without each other.
+function SHAW.isDebug()
+    if isDebugEnabled() then return true end
+    return SHAW.Config ~= nil and SHAW.Config.get("Debug") == true
+end
+
+--- Debug print, gated so it costs nothing when off.
 function SHAW.log(message, ...)
-    if not SHAW.Config or not SHAW.Config.get("Debug") then return end
+    if not SHAW.isDebug() then return end
     if select("#", ...) > 0 then
         message = string.format(message, ...)
     end

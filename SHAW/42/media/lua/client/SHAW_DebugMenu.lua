@@ -6,10 +6,14 @@
     adds a right-click menu that forces each one immediately and dumps the
     state the traits keep.
 
-    Only present when the Debug sandbox option is on, so a shipped game never
-    shows it. It also never grants or removes traits: a trait mod that can hand
-    itself traits at runtime hides exactly the character-creation bugs worth
-    finding. Make a test character with the traits picked normally.
+    Present when SHAW.isDebug() - the Debug sandbox option OR the game's -debug
+    launch flag - so a shipped game never shows it, while a dev does not have to
+    start a new character to get it (sandbox options cannot be changed on an
+    existing save).
+
+    It never grants or removes traits: a trait mod that can hand itself traits at
+    runtime hides exactly the character-creation bugs worth finding. Make a test
+    character with the traits picked normally.
 ]]
 
 SHAW = SHAW or {}
@@ -210,8 +214,7 @@ end
 --- DebugContextMenu.doDebugMenu uses. If you already have the vanilla Debug
 --- menu, you get this one too, on any save.
 local function allowed()
-    if isDebugEnabled() then return true end
-    return SHAW.Config ~= nil and SHAW.Config.get("Debug") == true
+    return SHAW.isDebug()
 end
 
 --- Signature is (player, context, worldobjects, test) - `player` is the player

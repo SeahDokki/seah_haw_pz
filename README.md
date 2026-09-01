@@ -312,15 +312,16 @@ python tools/i18ncheck.py     # locale drift, undefined IGUI keys, option/DEFAUL
 .\deploy.ps1
 ```
 
-Launch `ProjectZomboid64ShowConsole.bat`. In the sandbox options set **H:AW : General → Debug logging = on**, then:
+Launch the game with `-debug` (`ProjectZomboid64ShowConsole.bat` plus the flag, or the Steam launch option). That is
+all the setup there is: the debug menu and the `[SHAW]` console lines both key off `isDebugEnabled()`, so you do **not**
+need the Debug sandbox option and you do **not** need a new save to get them.
 
-- **H:AW : Traits on/off** — leave everything on
-- **H:AW : Tuning** — drop every *gap* to its minimum: `EpilepsyCooldown 1`, `NarcolepsyMinHours 1`,
-  `NeuralgiaMinMinutes 1`, `TouretteMinMinutes 1`. Set `EDSTripChance 100`. This turns hours of waiting into seconds
-- Start a **new character** with all ten implemented traits picked — trait changes never apply to an existing one
+Start a **new character** with the ten implemented traits picked — trait changes never apply to an existing character.
+Leave every sandbox option alone; the *Force* menu bypasses the timers, so the tuning values do not matter for testing
+(and could not be changed on an existing save anyway).
 
-Everything below is one right-click on the ground → **H:AW (debug)**. `Set condition` puts the character straight into
-the state a trait waits for; `Force` fires the timed ones now.
+Everything below is one right-click on the ground → **Humans: Are Weak (debug)**. `Set condition` puts the character
+straight into the state a trait waits for; `Force` fires the timed ones now.
 
 ### Two minutes: does anything work at all
 
