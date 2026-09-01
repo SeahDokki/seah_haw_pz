@@ -199,8 +199,28 @@ end
 
 -- -------------------------------------------------------------------- menu --
 
-local function buildMenu(playerIndex, context)
-    if not SHAW.Config or not SHAW.Config.get("Debug") then return end
+--- Is the debug menu allowed right now?
+---
+--- Two ways in, and the second one matters. The sandbox option is the shipped
+--- switch, but **sandbox options cannot be changed on an existing save** - so
+--- gating on it alone meant "make a whole new character to get the test menu",
+--- which is the opposite of a fast test loop.
+---
+--- isDebugEnabled() is the game's own -debug launch flag, the same check
+--- DebugContextMenu.doDebugMenu uses. If you already have the vanilla Debug
+--- menu, you get this one too, on any save.
+local function allowed()
+    if isDebugEnabled() then return true end
+    return SHAW.Config ~= nil and SHAW.Config.get("Debug") == true
+end
+
+--- Signature is (player, context, worldobjects, test) - `player` is the player
+--- NUMBER, not the object. The `test` pass is a probe that asks whether the
+--- handler would add anything; it must not build the menu, or entries are
+--- duplicated. Both conventions copied from DebugContextMenu.doDebugMenu.
+local function buildMenu(playerIndex, context, worldobjects, test)
+    if not allowed() then return end
+    if test and ISWorldObjectContextMenu.Test then return true end
 
     local root = context:addOption(getText("IGUI_SHAW_ModName") .. " (debug)")
     local menu = ISContextMenu:getNew(context)

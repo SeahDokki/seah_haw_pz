@@ -198,6 +198,29 @@ hands the handler an `IsoZombie`, and `getPlayerNum()` on that is a hard error. 
 on the first playtest. Every handler outside the tick dispatcher goes through `SHAW.asLocalPlayer()` or
 `SHAW.eventPlayer()` in Core, which check `instanceof(x, "IsoPlayer")` and `isLocalPlayer()`.
 
+**A trait with no icon is invisible, and nothing says so.** Both panels that list traits skip any definition whose
+`getTexture()` is nil - `ISCharacterScreen.setDisplayedTraits` and `ISPlayerStatsUI.loadTraits` each guard on it. The
+trait is still fully applied and its effects still fire; it just never appears in the UI, which reads exactly like the
+trait failed to load. H:AW hit this: `console.txt` showed `TraitZ shaw:adhd` and the ADHD effects worked while both
+panels showed an empty trait list.
+
+It is a vanilla gap, not a modding mistake. `CharacterTraitDefinition` names `media/ui/Traits/trait_generic.png` as a
+fallback and **that file does not ship** - the folder holds 16 icons for ~90 vanilla traits, so most vanilla traits are
+invisible there too.
+
+Set the texture explicitly rather than relying on the engine's derived path (`media/ui/Traits/trait_` + name +
+`.png`, lower-cased): what it uses for a modded `SHAW:adhd` is undocumented, and if it is the full id the filename
+would contain a colon, which is illegal on Windows. `CharacterTraitDefinition` is `@UsedFromLua` and exposes
+`setTexture`, so `SHAW_Icons.lua` calls it directly on `OnGameStart`. Icons come from `tools/maketraiticons.py`.
+
+**Gate debug tooling on `isDebugEnabled()`, not only on a sandbox option.** Sandbox options cannot be changed on an
+existing save, so a debug menu gated on one alone means "make a new character to get the test menu" - the opposite of
+a fast loop. `isDebugEnabled()` is the game's own `-debug` flag and is what `DebugContextMenu.doDebugMenu` checks.
+`SHAW_DebugMenu.lua` accepts either.
+
+`Events.OnFillWorldObjectContextMenu` hands you `(player, context, worldobjects, test)` - `player` is the player
+**number**, not the object - and `test` is a probe pass that must not build the menu, or entries are duplicated.
+
 **A bare `%` in a translated string is a crash.** PZ runs every string through a Java `Formatter`, so `"(%)"` throws
 `UnknownFormatConversionException: Conversion = ')'` and the label renders broken. Vanilla escapes it as `%%`
 (`"10%%"`, `"300%%"`). Four sandbox labels shipped with `(%)` and broke in game. `tools/i18ncheck.py` now rejects any
