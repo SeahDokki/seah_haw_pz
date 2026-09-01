@@ -5,16 +5,18 @@
     a human shout (~15-20 tiles), pulling in every zombie in that radius. More
     frequent under stress.
 
-    This trait does not incapacitate. It makes noise, and the noise is the
-    whole penalty - which means addSound() is the important call here, not the
-    audible one. addSound() is what the zombie AI listens to; playing a sound
-    through the sound manager is audible to the player and invisible to the AI.
+    This trait does not incapacitate. It shouts, and the shout is the whole
+    penalty.
 
-    On audio: the mod ships no .ogg yet, so no sound name is passed and the tic
-    is currently silent to the player while still drawing zombies. That is a
-    poor experience and is tracked in the README - custom audio has to be
-    human-authored under LICENSE section 4. The moment a real sound exists,
-    pass its name to SHAW.playSound below and nothing else changes.
+    It uses the engine's own shout - the same thing the Shout key does, via
+    ISEmoteRadialMenu:emote(): playEmote("shout") then Callout(false). That
+    gives the character's real voice clip, the correct alert radius and the
+    animation, for free.
+
+    The first version called addSound() directly instead. Mechanically it drew
+    zombies, but it was completely silent to the player, so a forced tic read as
+    nothing happening. Using Callout also removes the need for a custom .ogg,
+    which is why Tourette's is no longer waiting on an audio asset.
 ]]
 
 SHAW = SHAW or {}
@@ -54,13 +56,31 @@ local function apply(player, data)
 
     reschedule(player, data)
 
-    local radius = SHAW.Config.get("TouretteRadius") or 18
+    -- Do the real shout, exactly as the Shout key does it. ISEmoteRadialMenu
+    -- :emote() is the keybind's path and it is two calls:
+    --
+    --     character:playEmote("shout")
+    --     character:Callout(false)
+    --
+    -- Callout is what actually vocalises and alerts zombies - the engine picks
+    -- the character's own voice clip and the correct radius, so there is no
+    -- custom audio to author and no addSound() to tune. This replaced a bare
+    -- addSound(), which drew zombies but was silent to the player and so read
+    -- as nothing happening at all.
+    local ok = pcall(function()
+        player:playEmote("shout")
+        player:Callout(false)
+    end)
 
-    -- No sound name: see the note at the top of this file. The AI still hears
-    -- it, which is the part that matters mechanically.
-    SHAW.makeNoise(player, radius)
-
-    SHAW.log("tourette: tic, radius %d tiles", radius)
+    if ok then
+        SHAW.log("tourette: tic - Callout fired")
+    else
+        -- Fall back to a plain noise so the trait still bites if either call
+        -- moves in a patch.
+        local radius = SHAW.Config.get("TouretteRadius") or 18
+        SHAW.makeNoise(player, radius)
+        SHAW.log("tourette: Callout failed, fell back to addSound(%d)", radius)
+    end
 end
 
 SHAW.Tick.register{

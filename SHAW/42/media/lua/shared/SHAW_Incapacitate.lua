@@ -20,9 +20,20 @@
     a timer to hold a character down - so re-triggering while the episode lasts
     is the engine-sanctioned approach, not a workaround.
 
-    The result is a character who is knocked over, cannot act, and gets shoved
-    back down every time they try to rise. It is not a true input lock, and a
-    player mashing keys will twitch. Documented rather than papered over.
+    The character is shoved ONCE per episode, not held down.
+
+    An earlier version re-applied the shove on a timer to keep them on the floor
+    for the full duration, copying vanilla's debug tool. In play that reads as
+    the character falling over and over in a loop, which looks broken rather
+    than afflicted - reported on both epilepsy and the Ehlers-Danlos cramp. One
+    fall is the effect; the episode duration now only governs how long the mod
+    considers the character occupied (SHAW.isIncapable) and when the recovery
+    effect fires.
+
+    Consequence worth knowing: the player regains control after the knockdown
+    animation, well before a long episode ends. If a trait needs more bite than
+    one fall, add a real penalty for the duration - maxing PAIN is the pattern
+    used by neuralgia - rather than re-shoving.
 
     State here is deliberately NOT in modData. An episode lasts seconds, so
     persisting it would put a throwaway timestamp into the save schema for no
@@ -33,12 +44,8 @@
 SHAW = SHAW or {}
 SHAW.Incapacitate = SHAW.Incapacitate or {}
 
--- playerNum -> { untilMs, nextShoveMs, reason }
+-- playerNum -> { untilMs, reason }
 local episodes = {}
-
--- The engine's own hold-down cadence, in milliseconds. Vanilla's debug tool
--- re-shoves every 300 ticks; this is the same idea on a wall clock.
-local RESHOVE_MS = 1200
 
 local function shove(player)
     player:setBumpType("stagger")
@@ -70,10 +77,8 @@ function SHAW.Incapacitate.begin(player, seconds, reason, announceKey)
     if not player or player:isDead() then return false end
     if SHAW.Incapacitate.isDown(player) then return false end
 
-    local now = getTimestampMs()
     episodes[player:getPlayerNum()] = {
-        untilMs = now + (seconds * 1000),
-        nextShoveMs = now,
+        untilMs = getTimestampMs() + (seconds * 1000),
         reason = reason,
     }
 
@@ -81,17 +86,21 @@ function SHAW.Incapacitate.begin(player, seconds, reason, announceKey)
     -- crafting on the floor.
     ISTimedActionQueue.clear(player)
 
+    -- The one and only shove.
+    shove(player)
+
     if announceKey then
         SHAW.sayBad(player, announceKey)
     end
 
-    SHAW.log("%s: down for %ds", tostring(reason), seconds)
+    SHAW.log("%s: knocked down, episode %ds", tostring(reason), seconds)
     return true
 end
 
---- Keep the character on the floor. Call every tick from the owning handler.
+--- Run the episode clock. Call every tick from the owning handler.
 --- Returns true while the episode is still running, false once it has ended
 --- (and only on the tick it ends, so callers can fire a recovery effect).
+--- Does NOT re-shove - see the note in the header.
 function SHAW.Incapacitate.tick(player, endedKey)
     if not player then return false end
 
@@ -108,11 +117,6 @@ function SHAW.Incapacitate.tick(player, endedKey)
         end
         SHAW.log("%s: over", tostring(episode.reason))
         return false
-    end
-
-    if now >= episode.nextShoveMs then
-        episode.nextShoveMs = now + RESHOVE_MS
-        shove(player)
     end
 
     return true

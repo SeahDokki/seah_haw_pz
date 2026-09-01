@@ -267,23 +267,23 @@ reaches ✅ once its behaviour has been seen working.
 
 | | Trait | Points | State |
 |---|---|---|---|
-| ⚠️ | [Epileptic](#epileptic) | +12 | Handler was never active (dispatcher bug, now fixed). Untested since |
-| ⚠️ | [Narcoleptic](#narcoleptic) | +12 | Sleep and damage-wake confirmed. Time still accelerates slightly |
+| ⚠️ | [Epileptic](#epileptic) | +12 | Fires correctly. Fell in a loop — now one fall. Retest |
+| ✅ | [Narcoleptic](#narcoleptic) | +12 | Validated in play |
 | 🛑 | [Diabetic](#diabetic) | +10 | Blocked: needs glucometer, insulin, bovine insulin |
-| ⚠️ | [Depressive](#depressive) | +6 | Apathy untested. Hunger-moodle hiding is **impossible** — see open points |
+| ⚠️ | [Depressive](#depressive) | +6 | Long tasks now blocked at max depression. Apathy untested. Hunger moodle **impossible** |
 | ⚠️ | [Immunocompromised](#immunocompromised) | +6 | Wound sepsis ✅ confirmed. Instant Knox turn reworked, untested |
 | 🛑 | [Asthmatic](#asthmatic) | +5 | Blocked: needs the inhaler and a breathing sound |
-| ⚠️ | [Ehlers-Danlos Syndrome](#ehlers-danlos-syndrome) | +5 | Cramp never fired (dispatcher bug). Roll cadence reworked, untested |
-| ⚠️ | [Neuralgia](#neuralgia) | +5 | Handler was never active (dispatcher bug, now fixed). Untested since |
-| ⚠️ | [Tourette's](#tourettes) | +5 | Handler was never active. Still **silent** — no audio asset |
+| ⚠️ | [Ehlers-Danlos Syndrome](#ehlers-danlos-syndrome) | +5 | Cramp works. Fell twice — now one fall. Retest |
+| ⚠️ | [Neuralgia](#neuralgia) | +5 | Knockdown replaced by max Pain + neck cramp. Retest |
+| ⚠️ | [Tourette's](#tourettes) | +5 | Now uses the engine's real shout — **no audio asset needed**. Retest |
 | 🛑 | [Allergic](#allergic) | +4 | Blocked: needs antihistamines and a sneeze sound |
 | ⚠️ | [Osteoarthritis](#osteoarthritis) | +4 | Untested. Attack *cooldown* itself is not Lua-settable |
-| ⚠️ | [ADHD](#adhd) | +4 | Reading ×3 ✅, hyperfocus + arrows ✅, stress refusal ✅. Boredom/stress rates untested |
-| ⚠️ | [Colour Blind](#colour-blind) | +2 | Greyscale seen, but only after a reload. Was running on the wrong character |
+| ✅ | [ADHD](#adhd) | +4 | Validated in play |
+| ✅ | [Colour Blind](#colour-blind) | +2 | Validated in play (single player) |
 
-**Nothing is ✅ overall yet.** One dispatcher bug meant the active-handler list was resolved on frame 1 — before the
-character's traits were readable — and then cached for the whole session. Four traits never ran at all. Fixed; the list
-is now re-resolved every two seconds.
+**3 of 10 validated.** A dispatcher bug had meant the active-handler list was resolved on frame 1 — before the
+character's traits were readable — and then cached for the whole session, so four traits never ran at all. Fixed, and
+the four now fire; what remains on them is feel, not plumbing.
 
 ### Supporting pieces
 
@@ -299,7 +299,7 @@ is now re-resolved every two seconds.
 | ✅ | In-game debug menu — force episodes, set conditions, dump state | `client/SHAW_DebugMenu.lua` |
 | ✅ | Checks: locale parity, IGUI keys, option drift, `%` escaping, Lua balance | `tools/` |
 | 🛑 | New items and their recipes | Diabetic, Asthmatic, Allergic depend on these |
-| 🛑 | Sound assets — asthma, tic, sneeze | Must be human-authored, see [LICENSE](LICENSE) §4 |
+| 🛑 | Sound assets — asthma, sneeze | Must be human-authored, see [LICENSE](LICENSE) §4. Tourette's no longer needs one |
 
 ## Testing
 
