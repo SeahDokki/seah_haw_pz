@@ -42,8 +42,16 @@ local function infectWounds(player, damage)
 
     for i = 0, parts:size() - 1 do
         local part = parts:get(i)
-        local open = part:isCut() or part:isScratched()
-                     or part:isDeepWounded() or part:getBiteTime() > 0
+        -- Time-based checks throughout, deliberately. BodyPart has isCut()
+        -- and isDeepWounded() but **no isScratched()** - only setScratched() -
+        -- and calling it threw "Object tried to call nil" on every single
+        -- tick, which killed this whole handler before it ever reached the
+        -- Knox code. A setter does not imply a getter on these Java classes.
+        -- The get*Time() family exists for all four wound types.
+        local open = part:getCutTime() > 0
+                     or part:getScratchTime() > 0
+                     or part:getDeepWoundTime() > 0
+                     or part:getBiteTime() > 0
 
         if open then
             if not part:isInfectedWound() then

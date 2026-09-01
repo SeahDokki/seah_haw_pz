@@ -270,21 +270,21 @@ reaches ✅ once its behaviour has been seen working.
 
 | | Trait | Points | State |
 |---|---|---|---|
-| ⚠️ | [Epileptic](#epileptic) | +12 | One fall + Pain pinned at max for the seizure. Retest |
+| ✅ | [Epileptic](#epileptic) | +12 | Validated in play |
 | ✅ | [Narcoleptic](#narcoleptic) | +12 | Validated in play |
 | 🛑 | [Diabetic](#diabetic) | +10 | Blocked: needs glucometer, insulin, bovine insulin |
 | ⚠️ | [Depressive](#depressive) | +6 | Long tasks now blocked at max depression. Apathy untested. Hunger moodle **impossible** |
-| ⚠️ | [Immunocompromised](#immunocompromised) | +6 | Wound sepsis ✅ confirmed. Instant Knox turn reworked, untested |
+| ⚠️ | [Immunocompromised](#immunocompromised) | +6 | Handler crashed every tick on a nil call — fixed, wholly untested |
 | 🛑 | [Asthmatic](#asthmatic) | +5 | Blocked: needs the inhaler and a breathing sound |
-| ⚠️ | [Ehlers-Danlos Syndrome](#ehlers-danlos-syndrome) | +5 | One fall + Pain pinned at max for the cramp. Retest |
-| ⚠️ | [Neuralgia](#neuralgia) | +5 | No fall, Pain pinned at max + neck cramp. Retest |
+| ⚠️ | [Ehlers-Danlos Syndrome](#ehlers-danlos-syndrome) | +5 | Forced cramp ✅. Random sprint roll never seen firing — now logged |
+| ✅ | [Neuralgia](#neuralgia) | +5 | Validated in play |
 | ⚠️ | [Tourette's](#tourettes) | +5 | Now uses the engine's real shout — **no audio asset needed**. Retest |
 | 🛑 | [Allergic](#allergic) | +4 | Blocked: needs antihistamines and a sneeze sound |
 | ⚠️ | [Osteoarthritis](#osteoarthritis) | +4 | Untested. Attack *cooldown* itself is not Lua-settable |
 | ✅ | [ADHD](#adhd) | +4 | Validated in play |
 | ✅ | [Colour Blind](#colour-blind) | +2 | Validated in play (single player) |
 
-**3 of 10 validated.** A dispatcher bug had meant the active-handler list was resolved on frame 1 — before the
+**5 of 10 validated.** A dispatcher bug had meant the active-handler list was resolved on frame 1 — before the
 character's traits were readable — and then cached for the whole session, so four traits never ran at all. Fixed, and
 the four now fire; what remains on them is feel, not plumbing.
 

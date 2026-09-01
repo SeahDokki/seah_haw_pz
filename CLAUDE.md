@@ -198,6 +198,29 @@ hands the handler an `IsoZombie`, and `getPlayerNum()` on that is a hard error. 
 on the first playtest. Every handler outside the tick dispatcher goes through `SHAW.asLocalPlayer()` or
 `SHAW.eventPlayer()` in Core, which check `instanceof(x, "IsoPlayer")` and `isLocalPlayer()`.
 
+**A setter does not imply a getter on these Java classes, and the mismatch is silent.** `BodyPart` has
+`setScratched()` but **no `isScratched()`** - while `isCut()` and `isDeepWounded()` both exist, so the API looks
+symmetrical and is not. Calling the missing one throws `Object tried to call nil`, and because every tick handler runs
+inside `pcall`, that killed the whole Immunocompromised trait on every tick for two playtests while the mod carried on
+looking healthy. The console said so plainly - read it before theorising:
+
+    [SHAW] handler 'immunocompromised' errored: Object tried to call nil in infectWounds
+
+Prefer the `get*Time()` family for wound state (`getCutTime`, `getScratchTime`, `getDeepWoundTime`, `getBiteTime`) -
+all four exist. And when adding any Java call, check it against the jar first:
+
+```bash
+python -c "import re,zipfile; z=zipfile.ZipFile(r'<game>/projectzomboid.jar');   d=z.read('zombie/characters/BodyDamage/BodyPart.class');   print('isScratched' in set(x.decode() for x in re.findall(rb'[ -~]{4,}',d)))"
+```
+
+**pcall isolation hides dead traits.** It is the right call - one broken trait must not stop the other nine - but it
+means a permanently failing handler looks like a trait that "does nothing" rather than a crash. Any report of a trait
+doing nothing should start with `grep '\[SHAW\]' console.txt`, not with reading the trait's logic.
+
+**Log both outcomes of a probabilistic roll.** Ehlers-Danlos logged only its successes, so "sprinted to exhaustion, no
+cramp" could not be told apart from "never counted as sprinting" - two playtests were wasted on that ambiguity. It now
+logs every roll with its chance and result.
+
 **A trait with no icon is invisible, and nothing says so.** Both panels that list traits skip any definition whose
 `getTexture()` is nil - `ISCharacterScreen.setDisplayedTraits` and `ISPlayerStatsUI.loadTraits` each guard on it. The
 trait is still fully applied and its effects still fire; it just never appears in the UI, which reads exactly like the

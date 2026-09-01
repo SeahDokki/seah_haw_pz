@@ -135,6 +135,33 @@ local function healUp()
     print("[SHAW] debug: healed, Knox flag cleared")
 end
 
+--- Which movement predicate is actually true right now.
+---
+--- Ehlers-Danlos gates on isSprinting(), and a playtest sprinted to exhaustion
+--- with no cramp - which could mean the roll kept missing, or that the sprint
+--- was never seen as a sprint. This answers that directly. Hold sprint and
+--- click it.
+local function reportMovement()
+    local p = player()
+    if not p then return end
+
+    local rows = {
+        { "isSprinting", p:isSprinting() },
+        { "isRunning", p:isRunning() },
+        { "isPlayerMoving", p:isPlayerMoving() },
+        { "isAsleep", p:isAsleep() },
+    }
+
+    print("[SHAW] ---- movement ----")
+    for _, row in ipairs(rows) do
+        print(string.format("[SHAW]   %-16s %s", row[1], tostring(row[2])))
+    end
+    print(string.format("[SHAW]   %-16s %.2f", "endurance",
+          SHAW.stat(p, CharacterStat.ENDURANCE)))
+    print(string.format("[SHAW]   %-16s %.2f", "EDS roll chance",
+          SHAW.Config.probability("EDSTripChance")))
+end
+
 local function refreshHandlers()
     SHAW.Tick.invalidate()
     print("[SHAW] debug: handler cache cleared")
@@ -252,6 +279,7 @@ local function buildMenu(playerIndex, context, worldobjects, test)
     context:addSubMenu(menu:addOption("Inspect"), inspect)
     inspect:addOption("Dump modData and traits", nil, dumpState)
     inspect:addOption("Dump stats and moodles", nil, dumpStats)
+    inspect:addOption("Report movement state", nil, reportMovement)
 
     menu:addOption("Release from episode", nil, freeCharacter)
     menu:addOption("Rebuild handler list", nil, refreshHandlers)

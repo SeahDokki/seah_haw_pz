@@ -89,7 +89,15 @@ local function apply(player, data)
             data.SHAW_edsNextRoll = now + ROLL_EVERY_MS
             data.SHAW_edsForce = nil
 
-            if forced or SHAW.chance(SHAW.Config.probability("EDSTripChance")) then
+            local chance = SHAW.Config.probability("EDSTripChance")
+            local hit = forced or SHAW.chance(chance)
+
+            -- Logged either way. Without this there is no way to tell "not
+            -- sprinting" from "rolling and missing", which is exactly the
+            -- ambiguity that made the last playtest inconclusive.
+            SHAW.log("eds: sprint roll p=%.2f -> %s", chance, hit and "CRAMP" or "miss")
+
+            if hit then
                 cramp(player, data)
                 return
             end
