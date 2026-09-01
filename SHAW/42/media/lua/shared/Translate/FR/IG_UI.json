@@ -1,4 +1,13 @@
 {
     "IGUI_SHAW_ModName": "Humans: Are Weak",
-    "IGUI_SHAW_Tagline": "Treize façons pour un corps de vous lâcher."
+    "IGUI_SHAW_Tagline": "Treize façons pour un corps de vous lâcher.",
+    "IGUI_SHAW_Seizure": "Une crise vous saisit",
+    "IGUI_SHAW_SeizureOver": "Le monde revient, lentement",
+    "IGUI_SHAW_SleepAttack": "Impossible de rester éveillé",
+    "IGUI_SHAW_PainSpike": "Douleur atroce",
+    "IGUI_SHAW_Apathy": "Vous n'arrivez pas à frapper",
+    "IGUI_SHAW_AnkleGives": "Votre cheville lâche",
+    "IGUI_SHAW_TooStressed": "Impossible de vous y tenir",
+    "IGUI_SHAW_FocusShift": "Votre focus se déplace",
+    "IGUI_SHAW_WoundTurned": "La plaie s'est infectée"
 }

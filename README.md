@@ -19,6 +19,7 @@ changes how you play — and hands you the points to pay for something better.
 - [The traits](#the-traits)
 - [New items](#new-items)
 - [Status](#status)
+- [Testing](#testing)
 - [Open points](#open-points)
 - [Installing](#installing)
 - [Contributing](#contributing)
@@ -56,7 +57,7 @@ capability with a permanent, recurring cost.
 | [Tourette's](#tourettes) | +5 | An involuntary shout at the worst moment |
 | [Allergic](#allergic) | +4 | Sneezing in spring woodland; peanuts make you sick |
 | [Osteoarthritis](#osteoarthritis) | +4 | Slower swings, hands that tire, worse in the cold |
-| [ADHD](#adhd) | +4 | Hyperfocus and fast reading, paid for in stress |
+| [ADHD](#adhd) | +4 | Hyperfocus on one skill; reading takes three times as long |
 | [Colour Blind](#colour-blind) | +2 | The world in greyscale |
 
 Costs are stated the way the character sheet states them: **+N means the trait gives you N points to spend.**
@@ -202,12 +203,15 @@ prolonged fight. Cold weather adds a further penalty.
 
 The only trait here with a real upside, and it is a double-edged one.
 
-- Reading speed ×3 on all books and magazines
+- **Reading takes three times as long** on every book and magazine — sitting still with a page is the hard part
 - **×15 XP on one random skill at a time** — hyperfocus. The boosted skill changes at random intervals
 - Stress and Boredom both climb very fast
 - Past a stress threshold the character refuses certain actions: waiting, reading, sleeping
 
-Mutually exclusive with Slow Reader and Illiterate.
+So the trait pulls in two directions on the same axis: skill books become expensive in *time*, while whichever skill
+is currently in hyperfocus races ahead without them.
+
+Mutually exclusive with Fast Reader and Illiterate.
 
 ---
 
@@ -238,18 +242,83 @@ None of these exist in vanilla; all are additions this mod must ship.
 
 What is in the repository today:
 
+**Ten of the thirteen traits are implemented and awaiting in-game testing.** The three that need items the mod does
+not ship yet are untouched.
+
+| Trait | State | Notes |
+|---|---|---|
+| Epileptic | 🔷 Written, untested | Stress · fatigue · lit torch · nearby TV, on an accumulating trigger score |
+| Narcoleptic | 🔷 Written, untested | Knockdown rather than real sleep — see below |
+| Depressive | 🔶 Partial | Rise/fall rates and apathy done; hiding the Hunger moodle is **not possible** |
+| Immunocompromised | 🔶 Partial | Wound sepsis and illness solid; the instant Knox turn needs a bite to confirm |
+| Ehlers-Danlos | 🔶 Partial | **Sprains do not exist in B42** — built from stiffness and light fractures |
+| Neuralgia | 🔷 Written, untested | |
+| Tourette's | 🔶 Partial | Draws zombies correctly, but **silent** — no audio asset yet |
+| Osteoarthritis | 🔶 Partial | Attack *cooldown* is not Lua-settable; uses stiffness and hand pain instead |
+| ADHD | 🔶 Partial | Reading ×3, hyperfocus, stress/boredom done; refuses reading only, not waiting/sleeping |
+| Colour Blind | 🔷 Written, untested | Works via the climate desaturation float — **single player only** |
+| Diabetic | ❌ Not started | Blocked: needs glucometer, insulin, bovine insulin |
+| Asthmatic | ❌ Not started | Blocked: needs the inhaler and a breathing sound |
+| Allergic | ❌ Not started | Blocked: needs antihistamines and a sneeze sound |
+
+Supporting pieces:
+
 | Piece | State |
 |---|---|
-| Trait definitions, costs, mutual exclusions | ✅ `SHAW/42/media/scripts/SHAW_traits.txt` |
-| Trait registration | ✅ `SHAW/42/media/registries.lua` |
+| Trait definitions, costs, mutual exclusions | ✅ `scripts/SHAW_traits.txt` |
+| Trait registration and lazy handle lookup | ✅ `registries.lua`, `shared/SHAW_Traits.lua` |
 | Names and descriptions, EN · FR · ES · DE | ✅ `Translate/<LANG>/UI.json` |
-| Namespace, context helpers, sandbox config | ✅ `lua/shared/SHAW_Core.lua`, `SHAW_Config.lua` |
-| Build and deploy scripts, Workshop staging | ✅ `build.ps1`, `deploy.ps1` |
-| **Trait behaviour — all thirteen** | ❌ Not started |
+| 27 sandbox options — per-trait switches and tuning | ✅ `sandbox-options.txt` |
+| Single update loop with per-trait throttling | ✅ `client/SHAW_Tick.lua` |
+| Shared knockdown primitive | ✅ `client/SHAW_Incapacitate.lua` |
+| In-game debug menu — force any episode, dump state | ✅ `client/SHAW_DebugMenu.lua` |
+| Checks: locale parity, IGUI keys, option/DEFAULTS drift | ✅ `tools/i18ncheck.py` |
 | **New items and their recipes** | ❌ Not started |
 | **Sound assets** (asthma, tic, sneeze) | ❌ Not started |
 
-The mod loads and the traits are selectable. Picking one currently does nothing.
+Nothing here has been run in the game yet — 🔷 means the code is written and statically checked, not that it works.
+Enable **Debug logging** in the sandbox options to get the right-click debug menu, which forces each timed episode
+rather than making you wait game-hours for one.
+
+---
+
+## Testing
+
+Run `python tools/i18ncheck.py` first — it catches locale drift, undefined `IGUI_SHAW_*` keys, and any sandbox option
+whose `DEFAULTS` entry has gone missing. Then:
+
+```powershell
+.\deploy.ps1
+```
+
+Launch `ProjectZomboid64ShowConsole.bat`, enable the mod, and **make a new character** — trait changes do not apply to
+an existing one. Turn on **H:AW : General → Debug logging** in the sandbox options so the debug menu and the `[SHAW]`
+console lines appear.
+
+The order below is deliberate: it front-loads the traits whose mechanism is least certain.
+
+| # | Test | How | Pass looks like |
+|---|---|---|---|
+| 1 | Traits register at all | New character, right-click → *H:AW (debug)* → *Inspect* → *Dump modData and traits* | Every trait prints `registered=true`; the ones you picked print `held=true` |
+| 2 | Only your traits tick | Console on character load | One `active handler(s)` line naming only the traits you picked |
+| 3 | Seizure | *Force* → *Seizure* | Character drops, cannot act ~18s, zombies react to the noise, then a stress jolt |
+| 4 | Sleep attack | *Force* → *Sleep attack* | Drops for 30–120s. Take a hit → wakes immediately (`woken by damage`) |
+| 5 | Pain spike | *Force* → *Pain spike* | Drops ~10s, Pain moodle jumps |
+| 6 | Vocal tic | *Force* → *Vocal tic*, standing near zombies | Zombies turn toward you. **No sound — expected** |
+| 7 | Ankle gives | *Force* → *Ankle gives*, then sprint | Trip, leg stiffness and pain, sometimes a light fracture |
+| 8 | Hyperfocus | *Force* → *Reroll hyperfocus*, then train the named skill | `+N bonus xp (x15)` in console; that skill races, others do not |
+| 9 | **Reading ×3** | Time a skill book with and without ADHD | Roughly three times as long, not faster |
+| 10 | ADHD refusal | Raise Stress to moodle 3+, try to read | Halo text, book does not open |
+| 11 | Osteoarthritis | Fight until winded, then check *Dump stats* | Endurance drains faster; actions get slower as hand pain rises |
+| 12 | Depressive | Let depression reach moodle 3–4 and swing repeatedly | Some swings do not happen, with halo text |
+| 13 | **Knox instant turn** | Immunocompromised character, get bitten | Turns immediately, no multi-day window. **The least certain test** |
+| 14 | Wound sepsis | Immunocompromised, take any scratch | Wound flags infected within seconds, halo text |
+| 15 | Colour Blind | Single player | World goes greyscale, and stays greyscale across weather changes |
+| 16 | Per-trait switches | Turn a trait off in sandbox, reload | Its handler disappears from the `active handler(s)` line |
+| 17 | Nothing leaks | Character *without* any H:AW trait | Zero `[SHAW]` handler lines, no debug menu effects |
+
+If a trait misbehaves, *Release from episode* frees a stuck character and *Rebuild handler list* re-resolves the
+handlers without a reload.
 
 ---
 
@@ -257,16 +326,48 @@ The mod loads and the traits are selectable. Picking one currently does nothing.
 
 Carried over from the design bible, plus what surfaced while scaffolding against Build 42.20.
 
+### Resolved while implementing
+
+- **Colour Blind shader** — no shader needed. `ClimateManager`'s `FLOAT_DESATURATION` is reachable from Lua via the
+  same admin-override path the game's own climate debug panel uses. But it is a **world** setting, not per-character,
+  so the trait is disabled outside single player rather than greying the world for everyone on a shared client.
+- **ADHD reading direction** — three times as *long*, not faster. Which is also why the trait is now mutually
+  exclusive with Fast Reader rather than Slow Reader.
+
+### Blocked by the engine
+
+- **Depressive: hiding the Hunger moodle.** The moodle bar is `zombie.ui.MoodlesUI`, a Java class with no per-moodle
+  Lua visibility control — it is not an ISUI panel a mod can subclass or wrap. `MoodleType.HUNGRY` exists as an enum
+  value but nothing in Lua can suppress its row. Doing this means reimplementing the whole vanilla moodle widget.
+- **Ehlers-Danlos: sprains.** They do not exist in 42.20 — no `setSprained`, no `isSprained`, no Sprain buff anywhere
+  in the API. The bible's primary mechanic is unavailable, so the trait is built from joint stiffness (B42's
+  muscle-strain value) plus light fractures, which do exist.
+- **Osteoarthritis: attack cooldown.** `BodyDamage` has `getMeleeCombatMod()` with no setter, and there is no
+  `setAttackSpeed`. The trait uses stiffness and hand pain instead — `adjustMaxTime` already multiplies action
+  duration by hand pain, so the felt result is close and the mechanism is the engine's own.
+- **Narcoleptic: real sleep.** `setAsleep(true)` fast-forwards time and restores fatigue, which would turn the trait
+  into a *benefit* — free hours, free rest, and the danger skipped past. It uses the knockdown primitive instead, so
+  the character is genuinely helpless in real time. Consequence: they are not "asleep" as far as the engine is
+  concerned, so sleep-related moodles do not move during an episode.
+
+### Still open
+
 1. **Diabetic** — blood-sugar decay rate per activity level. Does insulin expire?
-2. **Colour Blind** — is a black-and-white shader reachable from Lua at all? Confirm before building on it.
-3. **ADHD** — exact stress threshold for refusing actions, and the precise list of blocked actions. Is the player told
-   which skill is in hyperfocus?
-4. **Allergic** — which vanilla items contain peanuts? New `ContainsNuts` tag, or new items?
-5. **ADHD refusal** — refusal animation, UI message, or silent block?
-6. **Bovine insulin** — exact recipe, and how much worse than pharmacy insulin.
-7. **Asthmatic vs `base:asthmatic`** — currently mutually exclusive. Alternative would be to drop this trait and extend
-   the vanilla one instead, which would cost the mod its +5 but avoid two similar traits in the list.
+2. **Allergic** — which vanilla items contain peanuts? New `ContainsNuts` tag, or new items?
+3. **ADHD refusal scope** — reading is refused past the stress threshold. Waiting and sleeping are not: sleep has no
+   single chokepoint in 42.20, it goes through several context-menu entries and a dialog. Worth four fragile hooks?
+4. **Bovine insulin** — exact recipe, and how much worse than pharmacy insulin.
+5. **Asthmatic vs `base:asthmatic`** — currently mutually exclusive. Vanilla's is labelled *Short of Breath*, so the
+   names do not collide, but the mechanics overlap. Alternative: drop this trait and extend the vanilla one.
+6. **Immunocompromised: the instant Knox turn.** `setInfectionMortalityDuration`, `setInfectionGrowthRate` and
+   `setInfectionTime` are pushed toward "finish now", but their units are undocumented and no vanilla Lua file uses
+   them. Each call is guarded so a wrong signature costs the instant turn rather than crashing. **Confirm by getting
+   bitten.**
+7. **Tourette's and the other sounds** — the tic draws zombies but is silent to the player. Audio must be
+   human-authored under [LICENSE](LICENSE) §4, so no placeholder was generated.
 8. **Trait costs** — 80 points across 13 traits is a lot of budget. Needs playtest, not arithmetic.
+9. **Trigger tuning** — the epilepsy irritation rates, the EDS trip chance and the ADHD stress thresholds are first
+   guesses exposed as sandbox options precisely because they will be wrong.
 
 ---
 

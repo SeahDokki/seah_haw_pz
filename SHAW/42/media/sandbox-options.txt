@@ -16,6 +16,8 @@ VERSION = 1,
  * and the label plus tooltip in all four Sandbox.json files.
  */
 
+/* --------------------------------------------------- general */
+
 option SHAW.Debug
 {
     type = boolean,
@@ -23,4 +25,274 @@ option SHAW.Debug
 
     page = SHAWGeneral,
     translation = SHAW_Debug,
+}
+
+/* ---------------------------------------------------- traits */
+
+option SHAW.EnableEpileptic
+{
+    type = boolean,
+    default = true,
+
+    page = SHAWTraits,
+    translation = SHAW_EnableEpileptic,
+}
+
+option SHAW.EnableNarcoleptic
+{
+    type = boolean,
+    default = true,
+
+    page = SHAWTraits,
+    translation = SHAW_EnableNarcoleptic,
+}
+
+option SHAW.EnableDepressive
+{
+    type = boolean,
+    default = true,
+
+    page = SHAWTraits,
+    translation = SHAW_EnableDepressive,
+}
+
+option SHAW.EnableImmunocompromised
+{
+    type = boolean,
+    default = true,
+
+    page = SHAWTraits,
+    translation = SHAW_EnableImmunocompromised,
+}
+
+option SHAW.EnableEhlersDanlos
+{
+    type = boolean,
+    default = true,
+
+    page = SHAWTraits,
+    translation = SHAW_EnableEhlersDanlos,
+}
+
+option SHAW.EnableNeuralgia
+{
+    type = boolean,
+    default = true,
+
+    page = SHAWTraits,
+    translation = SHAW_EnableNeuralgia,
+}
+
+option SHAW.EnableTourette
+{
+    type = boolean,
+    default = true,
+
+    page = SHAWTraits,
+    translation = SHAW_EnableTourette,
+}
+
+option SHAW.EnableArthritis
+{
+    type = boolean,
+    default = true,
+
+    page = SHAWTraits,
+    translation = SHAW_EnableArthritis,
+}
+
+option SHAW.EnableADHD
+{
+    type = boolean,
+    default = true,
+
+    page = SHAWTraits,
+    translation = SHAW_EnableADHD,
+}
+
+option SHAW.EnableColorBlind
+{
+    type = boolean,
+    default = true,
+
+    page = SHAWTraits,
+    translation = SHAW_EnableColorBlind,
+}
+
+/* ---------------------------------------------------- tuning */
+
+option SHAW.EpilepsyCooldown
+{
+    type = integer,
+    min = 1,
+    max = 168,
+    default = 10,
+
+    page = SHAWTuning,
+    translation = SHAW_EpilepsyCooldown,
+}
+
+option SHAW.EpilepsyDuration
+{
+    type = integer,
+    min = 5,
+    max = 60,
+    default = 18,
+
+    page = SHAWTuning,
+    translation = SHAW_EpilepsyDuration,
+}
+
+option SHAW.NarcolepsyMinHours
+{
+    type = integer,
+    min = 1,
+    max = 72,
+    default = 5,
+
+    page = SHAWTuning,
+    translation = SHAW_NarcolepsyMinHours,
+}
+
+option SHAW.NarcolepsyMaxHours
+{
+    type = integer,
+    min = 2,
+    max = 168,
+    default = 20,
+
+    page = SHAWTuning,
+    translation = SHAW_NarcolepsyMaxHours,
+}
+
+option SHAW.NeuralgiaMinMinutes
+{
+    type = integer,
+    min = 1,
+    max = 240,
+    default = 10,
+
+    page = SHAWTuning,
+    translation = SHAW_NeuralgiaMinMinutes,
+}
+
+option SHAW.NeuralgiaMaxMinutes
+{
+    type = integer,
+    min = 2,
+    max = 480,
+    default = 40,
+
+    page = SHAWTuning,
+    translation = SHAW_NeuralgiaMaxMinutes,
+}
+
+option SHAW.TouretteMinMinutes
+{
+    type = integer,
+    min = 1,
+    max = 240,
+    default = 15,
+
+    page = SHAWTuning,
+    translation = SHAW_TouretteMinMinutes,
+}
+
+option SHAW.TouretteMaxMinutes
+{
+    type = integer,
+    min = 2,
+    max = 480,
+    default = 60,
+
+    page = SHAWTuning,
+    translation = SHAW_TouretteMaxMinutes,
+}
+
+option SHAW.TouretteRadius
+{
+    type = integer,
+    min = 1,
+    max = 60,
+    default = 18,
+
+    page = SHAWTuning,
+    translation = SHAW_TouretteRadius,
+}
+
+option SHAW.ApathyChance
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 15,
+
+    page = SHAWTuning,
+    translation = SHAW_ApathyChance,
+}
+
+option SHAW.ADHDReadingPercent
+{
+    type = integer,
+    min = 100,
+    max = 500,
+    default = 300,
+
+    page = SHAWTuning,
+    translation = SHAW_ADHDReadingPercent,
+}
+
+option SHAW.ADHDFocusMultiplier
+{
+    type = integer,
+    min = 1,
+    max = 50,
+    default = 15,
+
+    page = SHAWTuning,
+    translation = SHAW_ADHDFocusMultiplier,
+}
+
+option SHAW.ADHDFocusHours
+{
+    type = integer,
+    min = 1,
+    max = 72,
+    default = 6,
+
+    page = SHAWTuning,
+    translation = SHAW_ADHDFocusHours,
+}
+
+option SHAW.ADHDStressThreshold
+{
+    type = integer,
+    min = 0,
+    max = 4,
+    default = 3,
+
+    page = SHAWTuning,
+    translation = SHAW_ADHDStressThreshold,
+}
+
+option SHAW.EDSTripChance
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 8,
+
+    page = SHAWTuning,
+    translation = SHAW_EDSTripChance,
+}
+
+option SHAW.ColorBlindStrength
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 100,
+
+    page = SHAWTuning,
+    translation = SHAW_ColorBlindStrength,
 }

@@ -133,7 +133,7 @@ module SHAW
         Cost = -4,
         UIName = UI_trait_SHAW_ADHD,
         UIDescription = UI_trait_SHAW_ADHDDesc,
-        MutuallyExclusiveTraits = base:slowreader;base:illiterate,
+        MutuallyExclusiveTraits = base:fastreader;base:illiterate,
     }
 
     character_trait_definition SHAW:colorblind

@@ -1,4 +1,13 @@
 {
     "IGUI_SHAW_ModName": "Humans: Are Weak",
-    "IGUI_SHAW_Tagline": "Trece formas en que un cuerpo puede fallarte."
+    "IGUI_SHAW_Tagline": "Trece formas en que un cuerpo puede fallarte.",
+    "IGUI_SHAW_Seizure": "Te sobreviene una convulsión",
+    "IGUI_SHAW_SeizureOver": "El mundo vuelve, despacio",
+    "IGUI_SHAW_SleepAttack": "No puedes mantenerte despierto",
+    "IGUI_SHAW_PainSpike": "Dolor atroz",
+    "IGUI_SHAW_Apathy": "No consigues golpear",
+    "IGUI_SHAW_AnkleGives": "Tu tobillo cede",
+    "IGUI_SHAW_TooStressed": "No consigues concentrarte en esto",
+    "IGUI_SHAW_FocusShift": "Tu foco se desplaza",
+    "IGUI_SHAW_WoundTurned": "La herida se ha infectado"
 }

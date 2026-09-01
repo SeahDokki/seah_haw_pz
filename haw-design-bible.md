@@ -236,14 +236,14 @@ Les articulations grincent. Chaque combat est une négociation avec la douleur.
 L'hyperfocus peut tout changer. Le stress aussi.
 
 **Effets :**
-- Lecture ×3 (tous livres et magazines)
+- Lecture **3× plus lente** — temps de lecture triplé (tous livres et magazines)
 - EXP ×15 sur une compétence aléatoire à la fois (hyperfocus)
 - La compétence boostée change à intervalles aléatoires
 - Moodle Stress monte très vite, Moodle Ennui monte très vite
 - Si Stress trop élevé : le personnage refuse certaines actions (attendre, lire, dormir)
 
 **Implémentation :**
-- Modificateur vitesse de lecture (vanilla)
+- Modificateur vitesse de lecture (vanilla) — ralentissement ×3, pas une accélération
 - Hook sur gain d'XP : si compétence == `HAW_tdahFocusSkill` → ×15
 - `HAW_tdahFocusSkill` recalculé aléatoirement via `Events.EveryTenMinutes`
 - Multiplicateurs Stress/Ennui via paramètres du trait

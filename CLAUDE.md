@@ -4,8 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-Humans: Are Weak (H:AW) is a **Project Zomboid mod in design phase**. The traits and occupations are declared, costed and
-translated; **none of their behaviour is implemented**.
+Humans: Are Weak (H:AW) is a **Project Zomboid mod in first implementation**. All thirteen traits are declared, costed
+and translated. **Ten of them have behaviour written and statically checked but never run in the game** - see the
+status table in [README.md](README.md). The other three (Diabetic, Asthmatic, Allergic) are blocked on items the mod
+does not ship yet and have no code at all.
+
+Treat "written" as "unverified". The README carries a numbered test plan; work through it before adding anything new,
+and prefer fixing a trait that fails it over starting the item work.
 
 [haw-design-bible.md](haw-design-bible.md) is the **spec of record**, written in French. Read it before any implementation work. Its
 "Points ouverts" section lists deliberately-unresolved decisions - do not silently invent values for them; either ask,
@@ -116,6 +121,77 @@ Cooking Doctor Electricity Farming Fishing Fitness FlintKnapping Glassmaking Hus
 Mechanics MetalWelding Nimble PlantScavenging Pottery Reloading SmallBlade SmallBlunt Sneak Sprinting Strength
 Tailoring Tracking Trapping Woodwork`. There is no `LongBlade`.
 
+## Build 42 runtime APIs the traits actually use
+
+Verified against the installed 42.20.4 and, where the Lua files were silent, against the class constant pools in
+`projectzomboid.jar`. Every B41 tutorial online is wrong about the first two.
+
+**Stats are a keyed API now.** `getStress()`, `getFatigue()` and friends are gone. It is
+`player:getStats():get/set/add/remove(CharacterStat.X, value)`, with these keys: `ANGER BOREDOM DISCOMFORT ENDURANCE
+FATIGUE FITNESS FOOD_SICKNESS HUNGER IDLENESS INTOXICATION MORALE NICOTINE_WITHDRAWAL PAIN PANIC POISON SANITY
+SICKNESS STRESS TEMPERATURE THIRST UNHAPPINESS WETNESS ZOMBIE_FEVER ZOMBIE_INFECTION`.
+
+**Stat ranges are not uniform, so never hardcode one.** STRESS and PANIC run 0..1; PAIN, BOREDOM and UNHAPPINESS run
+0..100. Guessing wrong makes a trait either a no-op or an instant maximum, silently. `CharacterStat` carries its own
+`getMinimumValue()` / `getMaximumValue()`, which is what `SHAW.statRange()` and `SHAW.statFraction()` in
+`SHAW_Core.lua` use - go through those. `Stats:add/remove` also clamp engine-side, which is why `SHAW.addStat()`
+routes through them instead of doing the maths.
+
+**Moodles are read-only from Lua.** `player:getMoodles():getMoodleLevel(MoodleType.X)` returns 0..4. There is no
+setter: moodles are computed from stats, so to move a moodle you move the stat behind it. The full enum is `ANGRY
+BLEEDING BORED CANT_SPRINT DEAD DRUNK ENDURANCE FOOD_EATEN HAS_A_COLD HEAVY_LOAD HUNGRY HYPERTHERMIA HYPOTHERMIA
+INJURED NOXIOUS_SMELL PAIN PANIC SICK STRESS THIRST TIRED UNCOMFORTABLE UNHAPPY WET WINDCHILL ZOMBIE` - note only
+eleven of those appear anywhere in vanilla Lua, so grep is not a reliable inventory here.
+
+**Noise for the AI is `addSound`, not the sound manager.** `addSound(source, x, y, z, radius, volume)` is what zombies
+hear. `character:playSound("Name")` is what the player hears. Tourette's needs the first; a trait that only calls the
+second is silent to the horde. `SHAW.makeNoise()` and `SHAW.playSound()` wrap them.
+
+**Stretching an action goes through `adjustMaxTime`.** `ISBaseTimedAction:adjustMaxTime(maxTime)` is the engine's own
+hook, already applying unhappiness, drunkenness, hand pain and body temperature. Wrap the *specific* action's copy
+(`ISReadABook.adjustMaxTime`), never the base class, or every action in the game changes.
+
+**`Events.AddXP` is a notification, not a filter.** It fires after the XP has landed, with `(character, perk, amount)`.
+You cannot multiply the incoming amount; you can only top up with `getXp():AddXPNoMultiplier(perk, extra)` - and that
+re-raises the same event, so a re-entrancy guard is mandatory. See `SHAW_ADHD.lua`.
+
+**Perk identity is `perk:getId()`.** `getName()` is the translated display name and must never be persisted or
+compared.
+
+**There is no way to disable player input.** `setBlockMovement` exists only on animal behaviour. The reachable
+approximation is the shove the engine uses when a zombie pushes you, re-applied on a timer:
+
+```lua
+chr:setBumpType("stagger")
+chr:setVariable("BumpDone", false)
+chr:setVariable("BumpFall", true)
+chr:setVariable("BumpFallType", "pushedFront")
+```
+
+Taken from `client/DebugUIs/DebugContextMenu.lua`, which also re-applies it periodically to hold a character down.
+`SHAW_Incapacitate.lua` owns this; the three traits that drop the player share it rather than each rolling their own.
+
+**Injuries: fractures yes, sprains no.** `BodyPart` has `setFractureTime`, `setSplint`, `setStiffness`,
+`setAdditionalPain`, `setInfectedWound`, `setWoundInfectionLevel`. It has **nothing** for sprains - the concept does
+not exist in 42.20, which invalidates the design bible's primary Ehlers-Danlos mechanic. `setStiffness` (B42's
+muscle-strain value) is the closest substitute.
+
+**Global desaturation is reachable.** No shader needed for Colour Blind:
+
+```lua
+local option = getClimateManager():getClimateFloat(ClimateManager.FLOAT_DESATURATION)
+option:setEnableAdmin(true)
+option:setAdminValue(1.0)
+```
+
+It is a **world** setting, so it is single-player only, and the weather system overwrites it - the override has to be
+re-asserted periodically rather than set once.
+
+**Timers use the game clock, never the wall clock.** `getGameTime():getWorldAgeHours()` (wrapped as `SHAW.hours()`) is
+fractional, monotonic, saved with the world, and does not advance while paused. `getTimestampMs()` keeps running in the
+menu, so a cooldown built on it can be skipped by quitting to the main menu. Real milliseconds are used for exactly one
+thing in this mod: throttling how often a handler runs, in `SHAW_Tick.lua`.
+
 ## Naming and language conventions
 
 **The mod id and every prefix is `SHAW`** - decided, not a placeholder. It is the `id=` in `mod.info`, the module
@@ -176,45 +252,91 @@ sync with the `default =` lines in the options file.
 Adding an option means touching four places: the options file, the `DEFAULTS` table, and the label plus tooltip in all
 four `Translate/<LANG>/Sandbox.json` files. `tools/i18ncheck.py` catches the ones you forget.
 
-## Architecture the design implies
+## Architecture as built
 
-**Everything is a timer, and the timers live in modData.** Nine of the thirteen traits are "something happens at a
-random interval, or after a threshold is crossed". The natural shape is one `OnPlayerUpdate` dispatcher that ticks a
-table of per-trait handlers, plus `EveryTenMinutes` for the slow-moving values (blood sugar, the ADHD focus skill).
-Do not register thirteen separate `OnPlayerUpdate` callbacks.
+**One update loop, not thirteen.** `SHAW_Tick.lua` owns the only `OnPlayerUpdate` and `EveryTenMinutes` registration.
+Traits register a handler with a trait key, a sandbox option and an interval; the dispatcher resolves which handlers
+apply to a character *once*, caches that list, and throttles each one. Registering a second `OnPlayerUpdate` anywhere
+in this mod is a regression - it reintroduces the per-frame `hasTrait` cost the dispatcher exists to avoid. Each
+handler is called inside `pcall`, so one broken trait cannot stop the other nine.
 
-**Most of this mod is client-side.** These traits act on the local player: moodles, screen effects, blocked input,
-sounds. `media/lua/client/` is the default home. The exceptions are anything that writes durable state a server has to
-agree with - blood sugar in particular, since it can kill you.
+**Every trait lives in `client/`, and that is deliberate.** These traits act on the local player's own body - stats,
+body damage, moodles. Project Zomboid simulates that client-side even in multiplayer and syncs the result upward, so
+there is no `server/` counterpart and no command protocol. The one thing that would need `server/` is anything
+deciding *world* state, and no trait here does. Colour Blind comes closest and is single-player-gated for exactly that
+reason.
 
-**Seizures, sleep attacks and pain spikes all need the same primitive:** take control away from the player for N
-seconds, play an animation, emit a world sound, then give it back. Build that once and share it, rather than three
-near-identical lock/unlock implementations.
+**Three traits share one knockdown.** Epilepsy, narcolepsy and neuralgia all mean "drop the character, stop what they
+were doing, hold them there, hand control back". `SHAW_Incapacitate.lua` owns it, keyed by a `reason` string so each
+trait only ticks its own episode and they cannot stack. Its state is intentionally **not** in modData: an episode lasts
+seconds, so persisting it would add a throwaway timestamp to the save schema and a stale one would strand a character
+on the floor after a reload.
 
-**Two traits need new items, and one needs a shader.** The Diabetic (glucometer, insulin, bovine insulin), the
-Asthmatic (inhaler) and the Allergic (antihistamines) all depend on items that do not exist yet - those traits cannot
-be finished before the items are. Colour Blind depends on a full-screen desaturation shader whose feasibility from Lua
-is **unconfirmed**; check that before building anything on it, and fall back to a desaturated UI if it does not exist.
+**Persistent timers are in modData and measured in game hours.** Anything that has to survive a save - epilepsy
+cooldown, the next tic, the ADHD focus - is a `SHAW_*` key holding a `SHAW.hours()` value. Every read guards against a
+clock that moved backwards (a different save, a rolled-back world) by re-rolling rather than firing immediately.
+
+**Three traits are blocked on items.** Diabetic (glucometer, insulin, bovine insulin), Asthmatic (inhaler) and
+Allergic (antihistamines) have no code, because the items do not exist. Do not stub them; the item work comes first.
 
 **Immunocompromised overrides Knox progression.** It forces instant zombification. Humans: Are Resilient's
 Superimmunity blocks Knox entirely. If both mods are installed the two traits directly contradict each other. This has
 to be resolved in Lua - a cross-module `MutuallyExclusiveTraits` entry would break loading when the other mod is
 absent.
 
+**Where the design could not be met exactly.** Each of these is documented at the top of its own file, and in the
+README's open points. Do not "fix" one without reading the note first - they are conclusions, not omissions:
+
+| Trait | Bible asks for | Why not, and what it does instead |
+|---|---|---|
+| Depressive | Hide the Hunger moodle | `MoodlesUI` is Java with no per-moodle Lua control. Not done at all |
+| Ehlers-Danlos | Sprains | Sprains do not exist in 42.20. Uses stiffness + light fractures |
+| Osteoarthritis | Longer attack cooldown | No attack-speed setter. Uses stiffness + hand pain via `adjustMaxTime` |
+| Narcoleptic | Fall asleep | `setAsleep` fast-forwards time and restores fatigue - a *benefit*. Uses the knockdown |
+| ADHD | Refuse read/wait/sleep | Only reading has a single chokepoint (`isValid`). Reading only |
+| Tourette's | A vocal tic | Draws zombies via `addSound`, but silent: audio must be human-authored (LICENSE §4) |
+| Colour Blind | Greyscale world | Reachable, but it is a world setting. Single player only |
+
 ## ModData schema (`player:getModData()`)
 
+All values are game hours from `SHAW.hours()` unless noted. "Due at" keys hold an absolute hour, not a countdown, so
+they need no per-tick decrement and survive a save untouched.
+
 ```lua
-data.SHAW_initialized           -- bool  : character already processed
-data.SHAW_epilepsyLastCrisis    -- int   : timestamp of the last seizure (cooldown)
-data.SHAW_epilepsyTvTimer       -- float : cumulative time spent watching TV
-data.SHAW_narcoSleepTimer       -- float : countdown to the next sleep attack
-data.SHAW_glycemia              -- float : blood sugar, 0-100
-data.SHAW_tdahFocusSkill        -- string: skill currently under hyperfocus (x15 XP)
-data.SHAW_tdahFocusTimer        -- float : countdown to the next focus switch
-data.SHAW_touretteTimer         -- float : countdown to the next vocal tic
-data.SHAW_neuralgiaTimer        -- float : countdown to the next pain spike
-data.SHAW_asthmaInhalerDays     -- int   : days since the last inhaler use
+-- epilepsy
+data.SHAW_epilepsyLastCrisis    -- hour  : when the last seizure fired (cooldown base)
+data.SHAW_epilepsyIrritation    -- float : running trigger score, 0..100+
+data.SHAW_epilepsyTvTimer       -- int   : consecutive seconds near a switched-on TV
+data.SHAW_epilepsyLastScan      -- hour  : last light/TV world scan
+data.SHAW_epilepsyLightSeen     -- bool  : cached scan result
+data.SHAW_epilepsyTvSeen        -- bool  : cached scan result
+
+-- narcolepsy
+data.SHAW_narcoSleepTimer       -- hour  : next sleep attack is due at
+data.SHAW_narcoSleepDuration    -- float : length of the last episode, seconds
+
+-- neuralgia / tourette
+data.SHAW_neuralgiaNext         -- hour  : next pain spike is due at
+data.SHAW_touretteNext          -- hour  : next vocal tic is due at
+
+-- adhd
+data.SHAW_tdahFocusSkill        -- string: perk:getId() currently in hyperfocus
+data.SHAW_tdahFocusTimer        -- hour  : focus rotates at
+
+-- depressive / immunocompromised / ehlers-danlos
+data.SHAW_lastUnhappiness       -- float : previous UNHAPPINESS, for delta scaling
+data.SHAW_knoxForced            -- bool  : the Knox collapse has been applied once
+data.SHAW_edsSprintRolled       -- bool  : this sprint has had its one roll
+data.SHAW_edsStiffness          -- table : per-leg stiffness, for recovery drag
+data.SHAW_edsForce              -- bool  : debug menu - force the next roll
+
+-- not yet used; reserved for the item-blocked traits
+-- data.SHAW_glycemia           -- float : blood sugar, 0-100        (Diabetic)
+-- data.SHAW_asthmaInhalerDays  -- int   : days since last inhaler   (Asthmatic)
 ```
+
+`SHAW_initialized` was in the original schema and is **not** used: every timer key self-initialises on first read, so
+there is nothing a one-shot init would do. Do not reintroduce it without a reason.
 
 ## Traits
 
@@ -231,7 +353,7 @@ data.SHAW_asthmaInhalerDays     -- int   : days since the last inhaler use
 | `SHAW:tourette` | -5 | Needs sound variants |
 | `SHAW:allergy` | -4 | Needs a `ContainsNuts` tag or item list, and a sound |
 | `SHAW:arthritis` | -4 | Pure stat modifiers - the simplest one to build first |
-| `SHAW:adhd` | -4 | Exclusive with `base:slowreader`, `base:illiterate`. Needs an XP-gain hook |
+| `SHAW:adhd` | -4 | Exclusive with `base:fastreader`, `base:illiterate`. Needs an XP-gain hook |
 | `SHAW:colorblind` | -2 | Blocked on shader feasibility |
 
 Sound assets still to author: `asthma_breath`, `tourette_tic` (several variants), `sneeze`.
