@@ -4,21 +4,14 @@
     Design: bolts of excruciating pain, several times a game day, without
     warning.
 
-    NO KNOCKDOWN. The first version used the shared knockdown, and in play that
-    read as the character collapsing - wrong for a pain spike, which should stop
-    you where you stand rather than put you on the floor. It now does what the
-    design actually describes: the Pain moodle goes straight to maximum, and the
-    neck takes a hard cramp.
+    NO KNOCKDOWN - this is the one trait of the three that uses the shared
+    episode primitive with `shove = false`. A pain spike should stop you where
+    you stand, not put you on the floor. The first version did knock the
+    character down and it read as collapsing for no reason.
 
-    Maxing PAIN is not cosmetic. The engine reads it everywhere:
-
-      - `ISBaseTimedAction:adjustMaxTime()` stretches every action by hand pain
-      - high pain blocks sprinting outright
-      - it degrades melee and slows movement
-
-    So the character is genuinely crippled for the duration without any input
-    lock, and can still stagger somewhere safe - which is the interesting
-    decision the trait should create.
+    What it does instead is pin CharacterStat.PAIN at its ceiling for the
+    duration, plus a hard cramp in the neck. See SHAW_Incapacitate.lua for why
+    pinned pain genuinely incapacitates without any input lock.
 
     Neck rather than head: BodyPartType.Head has no good "cramp" reading, while
     Neck is a real part with the same stiffness and pain fields. Cervical and
@@ -42,9 +35,6 @@ local GRUNT_RADIUS = 5         -- tiles; a grunt, not a shout
 
 local NECK = { BodyPartType.Neck }
 
--- playerNum -> real ms at which the spike ends. Transient, so not in modData.
-local spikes = {}
-
 --- Roll the next spike, in game hours from now.
 local function reschedule(data)
     local lowMin, highMin = SHAW.Config.range("NeuralgiaMinMinutes", "NeuralgiaMaxMinutes")
@@ -53,39 +43,25 @@ local function reschedule(data)
     SHAW.log("neuralgia: next spike in %.0f game minutes", minutes)
 end
 
-local function pinPain(player)
-    local _, maxPain = SHAW.statRange(CharacterStat.PAIN)
-    SHAW.setStat(player, CharacterStat.PAIN, maxPain)
-    return maxPain
-end
-
 local function beginSpike(player)
-    spikes[player:getPlayerNum()] = getTimestampMs() + (SPIKE_SECONDS * 1000)
+    local started = SHAW.Incapacitate.begin{
+        player = player,
+        seconds = SPIKE_SECONDS,
+        reason = "pain",
+        announce = "IGUI_SHAW_PainSpike",
+        shove = false,      -- the whole point: no collapse
+        pinPain = true,
+    }
+    if not started then return end
 
-    -- Whatever they were doing is over.
-    ISTimedActionQueue.clear(player)
-
-    local maxPain = pinPain(player)
     SHAW.Soreness.raise(player, NECK, NECK_STIFFNESS, NECK_PAIN)
-
-    SHAW.sayBad(player, "IGUI_SHAW_PainSpike")
     SHAW.makeNoise(player, GRUNT_RADIUS)
-    SHAW.log("neuralgia: spike, PAIN pinned to %.0f for %ds", maxPain, SPIKE_SECONDS)
 end
 
 local function apply(player, data)
-    local num = player:getPlayerNum()
-    local endsAt = spikes[num]
-
-    -- Mid-spike: hold PAIN at the ceiling. The engine bleeds pain away
-    -- continuously, so without re-pinning the spike fades in a second or two.
-    if endsAt then
-        if getTimestampMs() < endsAt then
-            pinPain(player)
-        else
-            spikes[num] = nil
-            SHAW.log("neuralgia: spike over")
-        end
+    -- Mid-spike: the primitive re-pins pain and times the episode out.
+    if SHAW.Incapacitate.reason(player) == "pain" then
+        SHAW.Incapacitate.tick(player)
         return
     end
 
@@ -119,7 +95,3 @@ SHAW.Tick.register{
     everyMs = 400,
     fn = apply,
 }
-
-Events.OnCreatePlayer.Add(function()
-    spikes = {}
-end)

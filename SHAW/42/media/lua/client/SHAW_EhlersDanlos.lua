@@ -11,8 +11,10 @@
     Same felt outcome - the leg stops cooperating and stays sore - reached
     through a real system rather than a missing one.
 
-    The cramp also drops the character, because a leg seizing at a sprint means
-    going down. That part uses the shared knockdown.
+    The cramp drops the character once - a leg seizing at a sprint means going
+    down - and pins Pain at maximum while it lasts. Both come from the shared
+    knockdown primitive; see SHAW_Incapacitate.lua for why one fall plus pain
+    beats re-shoving.
 
     Rolled on a cadence while sprinting - every ROLL_EVERY_MS - rather than once
     per frame or once per burst. Per frame at any sane chance fires within the
@@ -45,7 +47,14 @@ local function cramp(player, data)
     local leg = SHAW.pick(SHAW.Soreness.LEGS)
     if not leg then return end
 
-    if not SHAW.Incapacitate.begin(player, CRAMP_SECONDS, "cramp", "IGUI_SHAW_LegCramp") then
+    if not SHAW.Incapacitate.begin{
+        player = player,
+        seconds = CRAMP_SECONDS,
+        reason = "cramp",
+        announce = "IGUI_SHAW_LegCramp",
+        shove = true,
+        pinPain = true,
+    } then
         return
     end
 

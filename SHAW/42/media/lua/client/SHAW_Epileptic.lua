@@ -3,8 +3,13 @@
 
     Design: seizures triggered by high stress, extreme fatigue, prolonged
     direct light, or watching TV too long, with a cooldown between them. The
-    seizure drops the character for 15-20 seconds, makes noise, and can cause a
-    light head injury. A short confused phase follows.
+    seizure drops the character, makes noise, and can cause a light head injury.
+    A short confused phase follows.
+
+    One fall, then Pain pinned at maximum for the rest of the episode. The fall
+    alone ends with its animation, seconds into an eighteen-second seizure, and
+    re-shoving to keep them down just looks like falling in a loop. Pain is what
+    makes the remaining time cost something - see SHAW_Incapacitate.lua.
 
     Triggers are evaluated as a running "irritation" score rather than as
     independent dice rolls: four separate rolls per tick would make seizures
@@ -85,7 +90,14 @@ end
 local function seize(player, data)
     local seconds = SHAW.Config.get("EpilepsyDuration") or 18
 
-    if not SHAW.Incapacitate.begin(player, seconds, "seizure", "IGUI_SHAW_Seizure") then
+    if not SHAW.Incapacitate.begin{
+        player = player,
+        seconds = seconds,
+        reason = "seizure",
+        announce = "IGUI_SHAW_Seizure",
+        shove = true,
+        pinPain = true,
+    } then
         return
     end
 

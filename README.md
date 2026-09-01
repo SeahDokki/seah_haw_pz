@@ -74,8 +74,10 @@ Convulsive seizures brought on by specific conditions.
 **Triggers:** high stress · extreme fatigue · prolonged direct light (torch, headlights) · watching TV too long. A
 cooldown sits between seizures.
 
-**During a seizure:** you drop and convulse for roughly 15–20 seconds, completely helpless. The fall makes noise, which
-draws zombies. A light head injury is possible. A short confused phase follows.
+**During a seizure:** you go down once, and Pain is pinned at its maximum for the rest of the episode — roughly 15–20
+seconds in which you cannot sprint, every action crawls, and fighting is close to hopeless. You can still drag yourself
+somewhere, which is the whole decision. The fall makes noise, which draws zombies. A light head injury is possible. A
+short confused phase follows.
 
 ---
 
@@ -158,8 +160,9 @@ frequent and more severe.
 
 Joint hypermobility. Every sprint is a gamble.
 
-Sprinting carries a chance that a leg **cramps severely** and gives out under you — you go down, and the leg stays
-stiff and painful long after you get up. Soreness heals more slowly than it should.
+Sprinting carries a chance that a leg **cramps severely** and gives out under you — you go down once, Pain is pinned
+at its maximum for a few seconds, and the leg stays stiff and painful long after you get up. Soreness heals more slowly
+than it should.
 
 The cramp is rolled once per continuous sprint, not per frame, so sprinting is a gamble rather than an impossibility.
 
@@ -173,9 +176,9 @@ The cramp is rolled once per continuous sprint, not per frame, so sprinting is a
 
 *+5 points*
 
-Bolts of excruciating pain, without warning, several times a game day. During an attack — around 10 seconds — attacking,
-running and searching are all blocked. A pain animation plays with a quiet grunt, which carries as noise. The interval
-is randomised within a range.
+Bolts of excruciating pain, without warning, several times a game day. You do **not** fall — the spike stops you where
+you stand. Pain is pinned at its maximum for about twelve seconds, so sprinting is impossible and every action crawls,
+and your neck cramps hard. A quiet grunt carries as noise. The interval is randomised within a range.
 
 ---
 
@@ -267,14 +270,14 @@ reaches ✅ once its behaviour has been seen working.
 
 | | Trait | Points | State |
 |---|---|---|---|
-| ⚠️ | [Epileptic](#epileptic) | +12 | Fires correctly. Fell in a loop — now one fall. Retest |
+| ⚠️ | [Epileptic](#epileptic) | +12 | One fall + Pain pinned at max for the seizure. Retest |
 | ✅ | [Narcoleptic](#narcoleptic) | +12 | Validated in play |
 | 🛑 | [Diabetic](#diabetic) | +10 | Blocked: needs glucometer, insulin, bovine insulin |
 | ⚠️ | [Depressive](#depressive) | +6 | Long tasks now blocked at max depression. Apathy untested. Hunger moodle **impossible** |
 | ⚠️ | [Immunocompromised](#immunocompromised) | +6 | Wound sepsis ✅ confirmed. Instant Knox turn reworked, untested |
 | 🛑 | [Asthmatic](#asthmatic) | +5 | Blocked: needs the inhaler and a breathing sound |
-| ⚠️ | [Ehlers-Danlos Syndrome](#ehlers-danlos-syndrome) | +5 | Cramp works. Fell twice — now one fall. Retest |
-| ⚠️ | [Neuralgia](#neuralgia) | +5 | Knockdown replaced by max Pain + neck cramp. Retest |
+| ⚠️ | [Ehlers-Danlos Syndrome](#ehlers-danlos-syndrome) | +5 | One fall + Pain pinned at max for the cramp. Retest |
+| ⚠️ | [Neuralgia](#neuralgia) | +5 | No fall, Pain pinned at max + neck cramp. Retest |
 | ⚠️ | [Tourette's](#tourettes) | +5 | Now uses the engine's real shout — **no audio asset needed**. Retest |
 | 🛑 | [Allergic](#allergic) | +4 | Blocked: needs antihistamines and a sneeze sound |
 | ⚠️ | [Osteoarthritis](#osteoarthritis) | +4 | Untested. Attack *cooldown* itself is not Lua-settable |
