@@ -198,6 +198,17 @@ hands the handler an `IsoZombie`, and `getPlayerNum()` on that is a hard error. 
 on the first playtest. Every handler outside the tick dispatcher goes through `SHAW.asLocalPlayer()` or
 `SHAW.eventPlayer()` in Core, which check `instanceof(x, "IsoPlayer")` and `isLocalPlayer()`.
 
+**Stiffness under 5 is inert, and the game says so in as many words.** `ISHealthPanel` shows nothing below 5,
+"Minor Muscle Strain" from 5, "Muscle Strain" from 20, and labels the sub-5 band
+`IGUI_health_DebugInvisibleStiffness` = *"(Debug - Invisible Muscle Strain - HAS NO EFFECT ON THE PLAYER!)"*. Any
+soreness ramp must therefore start at 5, not at 0.
+
+**`BodyPartType` has torso parts.** The full enum is `Foot_L Foot_R ForeArm_L ForeArm_R Groin Hand_L Hand_R Head
+LowerLeg_L LowerLeg_R Neck Torso_Lower Torso_Upper UpperArm_L UpperArm_R UpperLeg_L UpperLeg_R`. An earlier reading of
+this file claimed there was no torso or back part - that was a bad regex, not the engine: `Torso_Lower` and
+`Torso_Upper` carry no `_L`/`_R` suffix and were filtered out. Extract enums with `^[A-Z][A-Za-z_]*\Z`, and sanity-check
+the result against the in-game health panel, which lists every part by name.
+
 **A setter does not imply a getter on these Java classes, and the mismatch is silent.** `BodyPart` has
 `setScratched()` but **no `isScratched()`** - while `isCut()` and `isDeepWounded()` both exist, so the API looks
 symmetrical and is not. Calling the missing one throws `Object tried to call nil`, and because every tick handler runs

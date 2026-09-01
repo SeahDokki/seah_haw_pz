@@ -56,14 +56,22 @@ local ROLL_EVERY_MS = 1500
 local SIT_GRACE_MS = 45000       -- how long you can sit before it starts
 local SIT_TO_FULL_MS = 240000    -- how long from there to the ceiling
 
+-- Stiffness below 5 does NOTHING. ISHealthPanel labels that band
+-- "Invisible Muscle Strain - HAS NO EFFECT ON THE PLAYER!" and only shows
+-- "Minor Muscle Strain" from 5, "Muscle Strain" from 20. So the ramp starts at
+-- the effect threshold rather than at zero - otherwise the first stretch of
+-- sitting produced stiffness that was real in the data and inert in the game.
+local STIFFNESS_FLOOR = 5
 local SIT_STIFFNESS = 30         -- ceiling on furniture
 local SIT_PAIN = 10
 local GROUND_MULTIPLIER = 1.8    -- on the floor it bites harder and sooner
 
--- Hips and thighs: what a folded seated posture actually loads. There is no
--- torso or back BodyPartType in Build 42, so Groin is as close to the lower
--- back as the model gets.
+-- Lower back, hips and legs: what a folded seated posture actually loads.
+-- Torso_Lower and Torso_Upper DO exist in Build 42 - an earlier reading of the
+-- enum missed them because they carry no _L/_R suffix - so the lower back is
+-- available and is the honest part for this.
 local SEATED_PARTS = {
+    BodyPartType.Torso_Lower,
     BodyPartType.Groin,
     BodyPartType.UpperLeg_L, BodyPartType.UpperLeg_R,
     BodyPartType.LowerLeg_L, BodyPartType.LowerLeg_R,
@@ -71,6 +79,8 @@ local SEATED_PARTS = {
 
 -- playerNum -> real ms when the current sit began. Transient by nature.
 local satDown = {}
+local satLogged = {}
+local SIT_LOG_EVERY_MS = 15000
 
 --- Stiffen up while seated; forget it the moment they stand.
 local function sitting(player)
@@ -80,6 +90,7 @@ local function sitting(player)
 
     if not seated then
         satDown[num] = nil
+        satLogged[num] = nil
         return
     end
 
@@ -95,9 +106,21 @@ local function sitting(player)
     local progress = SHAW.clamp(held / SIT_TO_FULL_MS, 0, 1)
     local scale = onGround and GROUND_MULTIPLIER or 1
 
-    SHAW.Soreness.raise(player, SEATED_PARTS,
-                        SIT_STIFFNESS * progress * scale,
-                        SIT_PAIN * progress * scale)
+    -- Ramp from the effect threshold, not from zero.
+    local stiffness = (STIFFNESS_FLOOR + (SIT_STIFFNESS - STIFFNESS_FLOOR) * progress) * scale
+    local pain = SIT_PAIN * progress * scale
+
+    SHAW.Soreness.raise(player, SEATED_PARTS, stiffness, pain)
+
+    -- Throttled so a long sit does not flood the console, but present at all -
+    -- the last playtest could not distinguish "not detected as sitting" from
+    -- "applied but invisible", which is the same ambiguity that cost a retest
+    -- on the sprint roll.
+    if not satLogged[num] or (now - satLogged[num]) >= SIT_LOG_EVERY_MS then
+        satLogged[num] = now
+        SHAW.log("eds: seated %ds (ground=%s) -> stiffness %.1f pain %.1f",
+                 (now - satDown[num]) / 1000, tostring(onGround), stiffness, pain)
+    end
 end
 
 -- How much of the engine's stiffness recovery is handed back each tick.
@@ -178,6 +201,7 @@ end
 
 Events.OnCreatePlayer.Add(function()
     satDown = {}
+    satLogged = {}
 end)
 
 SHAW.Tick.register{

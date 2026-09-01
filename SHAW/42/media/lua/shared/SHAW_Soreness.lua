@@ -18,6 +18,21 @@
     it behaves the way the design wants - it hurts, it slows you, and it fades
     over time rather than needing a splint.
 
+    STIFFNESS BELOW 5 DOES NOTHING. ISHealthPanel gates the display at 5 and
+    labels anything under it "Invisible Muscle Strain - HAS NO EFFECT ON THE
+    PLAYER!". From 5 it reads "Minor Muscle Strain", from 20 "Muscle Strain".
+    So any ramp should start at 5 rather than at zero, or its opening stretch is
+    real in the data and inert in the game - which is exactly how the
+    Ehlers-Danlos sitting rule first shipped.
+
+    Stiffness is mirrored in two places. BodyPart:setStiffness() is the value the
+    health panel reads; Fitness also tracks it per part with a decay timer
+    (Fitness.setStiffness / incFutureStiffness / removeStiffnessValue), and
+    vanilla's "treat" path clears BOTH. This mod writes only the BodyPart side,
+    which is what drives the display and the >= 5 effect. If stiffness ever
+    needs to decay on the engine's own schedule rather than ours, the Fitness
+    side is where to look.
+
     Pain in the hands has a second effect worth knowing about:
     ISBaseTimedAction:adjustMaxTime() multiplies every action's duration by
     (1 + handPain/300), summed across Hand_L through ForeArm_R. So sore hands
