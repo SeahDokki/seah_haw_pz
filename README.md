@@ -260,48 +260,46 @@ None of these exist in vanilla; all are additions this mod must ship.
 
 ## Status
 
-What is in the repository today:
+🛑 not started · ⚠️ in progress, not finished · ✅ works as designed
 
-**Ten of the thirteen traits are implemented and awaiting in-game testing.** The three that need items the mod does
-not ship yet are untouched.
+Updated from actual in-game testing, not from whether code exists. A trait only
+reaches ✅ once its behaviour has been seen working.
 
-| Trait | State | Notes |
+| | Trait | Points | State |
+|---|---|---|---|
+| ⚠️ | [Epileptic](#epileptic) | +12 | Handler was never active (dispatcher bug, now fixed). Untested since |
+| ⚠️ | [Narcoleptic](#narcoleptic) | +12 | Sleep and damage-wake confirmed. Time still accelerates slightly |
+| 🛑 | [Diabetic](#diabetic) | +10 | Blocked: needs glucometer, insulin, bovine insulin |
+| ⚠️ | [Depressive](#depressive) | +6 | Apathy untested. Hunger-moodle hiding is **impossible** — see open points |
+| ⚠️ | [Immunocompromised](#immunocompromised) | +6 | Wound sepsis ✅ confirmed. Instant Knox turn reworked, untested |
+| 🛑 | [Asthmatic](#asthmatic) | +5 | Blocked: needs the inhaler and a breathing sound |
+| ⚠️ | [Ehlers-Danlos Syndrome](#ehlers-danlos-syndrome) | +5 | Cramp never fired (dispatcher bug). Roll cadence reworked, untested |
+| ⚠️ | [Neuralgia](#neuralgia) | +5 | Handler was never active (dispatcher bug, now fixed). Untested since |
+| ⚠️ | [Tourette's](#tourettes) | +5 | Handler was never active. Still **silent** — no audio asset |
+| 🛑 | [Allergic](#allergic) | +4 | Blocked: needs antihistamines and a sneeze sound |
+| ⚠️ | [Osteoarthritis](#osteoarthritis) | +4 | Untested. Attack *cooldown* itself is not Lua-settable |
+| ⚠️ | [ADHD](#adhd) | +4 | Reading ×3 ✅, hyperfocus + arrows ✅, stress refusal ✅. Boredom/stress rates untested |
+| ⚠️ | [Colour Blind](#colour-blind) | +2 | Greyscale seen, but only after a reload. Was running on the wrong character |
+
+**Nothing is ✅ overall yet.** One dispatcher bug meant the active-handler list was resolved on frame 1 — before the
+character's traits were readable — and then cached for the whole session. Four traits never ran at all. Fixed; the list
+is now re-resolved every two seconds.
+
+### Supporting pieces
+
+| | Piece | |
 |---|---|---|
-| Epileptic | 🔷 Written, untested | Stress · fatigue · lit torch · nearby TV, on an accumulating trigger score |
-| Narcoleptic | 🔷 Written, untested | Real `setAsleep`, without the time skip. Damage wakes you |
-| Depressive | 🔶 Partial | Rise/fall rates and apathy done; hiding the Hunger moodle is **not possible** |
-| Immunocompromised | 🔶 Partial | Wound sepsis and illness solid; the instant Knox turn needs a bite to confirm |
-| Ehlers-Danlos | 🔷 Written, untested | A severe leg cramp; **sprains do not exist in B42** |
-| Neuralgia | 🔷 Written, untested | |
-| Tourette's | 🔶 Partial | Draws zombies correctly, but **silent** — no audio asset yet |
-| Osteoarthritis | 🔶 Partial | A chronic hand cramp. Attack *cooldown* itself is not Lua-settable |
-| ADHD | 🔶 Partial | Reading ×3, hyperfocus, stress/boredom done; refuses reading only, not waiting/sleeping |
-| Colour Blind | 🔶 Partial | True greyscale in single player; an approximate local overlay in MP |
-| Diabetic | ❌ Not started | Blocked: needs glucometer, insulin, bovine insulin |
-| Asthmatic | ❌ Not started | Blocked: needs the inhaler and a breathing sound |
-| Allergic | ❌ Not started | Blocked: needs antihistamines and a sneeze sound |
-
-Supporting pieces:
-
-| Piece | State |
-|---|---|
-| Trait definitions, costs, mutual exclusions | ✅ `scripts/SHAW_traits.txt` |
-| Trait registration and lazy handle lookup | ✅ `registries.lua`, `shared/SHAW_Traits.lua` |
-| Names and descriptions, EN · FR · ES · DE | ✅ `Translate/<LANG>/UI.json` |
-| 28 sandbox options — per-trait switches and tuning | ✅ `sandbox-options.txt` |
-| Single update loop with per-trait throttling | ✅ `client/SHAW_Tick.lua` |
-| Shared knockdown primitive | ✅ `client/SHAW_Incapacitate.lua` |
-| Shared muscle-soreness primitive | ✅ `client/SHAW_Soreness.lua` |
-| In-game debug menu — force any episode, dump state | ✅ `client/SHAW_DebugMenu.lua` |
-| Checks: locale parity, IGUI keys, option/DEFAULTS drift | ✅ `tools/i18ncheck.py` |
-| **New items and their recipes** | ❌ Not started |
-| **Sound assets** (asthma, tic, sneeze) | ❌ Not started |
-
-Nothing here has been run in the game yet — 🔷 means the code is written and statically checked, not that it works.
-Enable **Debug logging** in the sandbox options to get the right-click debug menu, which forces each timed episode
-rather than making you wait game-hours for one.
-
----
+| ✅ | Trait definitions, costs, mutual exclusions | `scripts/SHAW_traits.txt` |
+| ✅ | Trait registration and lazy handle lookup | `registries.lua`, `shared/SHAW_Traits.lua` |
+| ✅ | Trait icons — without one a trait is invisible in every panel | `ui/Traits/`, `client/SHAW_Icons.lua` |
+| ✅ | Names and descriptions, EN · FR · ES · DE | `Translate/<LANG>/UI.json` |
+| ✅ | 28 sandbox options — per-trait switches and tuning | `sandbox-options.txt` |
+| ✅ | Single update loop, per-trait throttling, self-healing handler list | `shared/SHAW_Tick.lua` |
+| ✅ | Shared knockdown and soreness primitives | `shared/SHAW_Incapacitate.lua`, `SHAW_Soreness.lua` |
+| ✅ | In-game debug menu — force episodes, set conditions, dump state | `client/SHAW_DebugMenu.lua` |
+| ✅ | Checks: locale parity, IGUI keys, option drift, `%` escaping, Lua balance | `tools/` |
+| 🛑 | New items and their recipes | Diabetic, Asthmatic, Allergic depend on these |
+| 🛑 | Sound assets — asthma, tic, sneeze | Must be human-authored, see [LICENSE](LICENSE) §4 |
 
 ## Testing
 

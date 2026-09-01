@@ -291,7 +291,7 @@ option SHAW.EDSTripChance
     type = integer,
     min = 0,
     max = 100,
-    default = 8,
+    default = 15,
 
     page = SHAWTuning,
     translation = SHAW_EDSTripChance,

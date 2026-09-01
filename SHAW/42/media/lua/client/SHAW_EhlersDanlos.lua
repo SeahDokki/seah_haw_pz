@@ -14,9 +14,13 @@
     The cramp also drops the character, because a leg seizing at a sprint means
     going down. That part uses the shared knockdown.
 
-    Rolled once per continuous sprint, not per frame. At 60fps an 8% per-frame
-    chance fires within the first stride, every time - it has to be per sprint
-    or the trait is simply "you cannot sprint".
+    Rolled on a cadence while sprinting - every ROLL_EVERY_MS - rather than once
+    per frame or once per burst. Per frame at any sane chance fires within the
+    first stride every time. Once per burst was the first attempt and was just
+    as wrong in the other direction: a long sprint carried no more risk than a
+    single stride, and a playtest sprinted to exhaustion without one roll ever
+    landing. On a cadence, risk scales with how long you hold sprint, a short
+    dash stays mostly safe, and jogging is never affected (isSprinting only).
 
     Still not implemented: the bible also wants raised light-fracture chance on
     impacts generally. That needs a damage hook and is tracked in the README.
@@ -30,6 +34,9 @@ local CRAMP_SECONDS = 4
 -- should be felt for a while afterwards, not shrugged off in ten seconds.
 local CRAMP_STIFFNESS = 70
 local CRAMP_PAIN = 40
+
+-- How often the cramp is rolled while sprinting, in real milliseconds.
+local ROLL_EVERY_MS = 1500
 
 -- How much of the engine's stiffness recovery is handed back each tick.
 local RECOVERY_DRAG = 0.5
@@ -54,14 +61,23 @@ local function apply(player, data)
 
     if SHAW.isIncapable(player) then return end
 
-    if player:isSprinting() then
-        -- One roll per continuous sprint. The latch clears when they stop.
-        if not data.SHAW_edsSprintRolled then
-            data.SHAW_edsSprintRolled = true
+    -- The debug menu arms a guaranteed cramp for the next sprint.
+    local forced = data.SHAW_edsForce
 
-            -- SHAW_edsForce is set by the debug menu to make the next roll a
-            -- certainty; an 8% chance is not a test loop. Consumed on use.
-            local forced = data.SHAW_edsForce
+    if player:isSprinting() then
+        -- Roll repeatedly while the sprint continues, not once per burst.
+        --
+        -- One roll per burst was wrong twice over: a long sprint was no riskier
+        -- than a single stride, and at the old 8% a playtest could sprint to
+        -- exhaustion without one roll ever landing. Rolling on a cadence makes
+        -- the risk scale with how long you hold sprint, which is what "every
+        -- sprint is a gamble" should mean - while a short dash stays mostly
+        -- safe, and jogging is never affected at all (isSprinting only).
+        local now = getTimestampMs()
+        local due = (data.SHAW_edsNextRoll or 0)
+
+        if forced or now >= due then
+            data.SHAW_edsNextRoll = now + ROLL_EVERY_MS
             data.SHAW_edsForce = nil
 
             if forced or SHAW.chance(SHAW.Config.probability("EDSTripChance")) then
@@ -70,7 +86,8 @@ local function apply(player, data)
             end
         end
     else
-        data.SHAW_edsSprintRolled = false
+        -- Reset the cadence so the first roll of the next sprint is immediate.
+        data.SHAW_edsNextRoll = 0
     end
 
     -- Slower recovery, across both legs.

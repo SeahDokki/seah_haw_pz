@@ -58,7 +58,6 @@ local function forceCramp()
     local p = player()
     if not p then return end
     -- Clear the once-per-sprint latch and guarantee the next roll succeeds.
-    p:getModData().SHAW_edsSprintRolled = false
     print("[SHAW] debug: sprint now - the next sprint cramps for certain")
     p:getModData().SHAW_edsForce = true
 end
@@ -148,7 +147,7 @@ local TRACKED = {
     "SHAW_narcoSleepTimer", "SHAW_narcoSleepDuration",
     "SHAW_neuralgiaNext", "SHAW_touretteNext",
     "SHAW_tdahFocusIndex", "SHAW_tdahFocusTimer",
-    "SHAW_lastUnhappiness", "SHAW_knoxForced", "SHAW_edsSprintRolled",
+    "SHAW_lastUnhappiness", "SHAW_knoxForced", "SHAW_edsNextRoll",
     "SHAW_arthritisAnnounced",
 }
 

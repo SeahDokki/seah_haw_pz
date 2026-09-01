@@ -16,15 +16,12 @@
     2. Illness - solid. setColdProgressionRate() makes anything the character
        catches progress faster, and SICKNESS is a plain stat to nudge.
 
-    3. Knox instant turn - LESS CERTAIN, and marked as such. The engine's
-       infection clock is driven by setInfectionTime(),
-       setInfectionMortalityDuration() and setInfectionGrowthRate(), but their
-       exact units are not documented anywhere reachable from Lua and are not
-       used by any vanilla Lua file. All three are pushed toward "finish now"
-       and each call is guarded, so a signature change costs the trait its
-       instant turn rather than crashing the mod. This is the one part of the
-       trait that has to be confirmed by actually getting bitten in-game -
-       see the test plan in the README.
+    3. Knox instant turn - now solid, after one wrong turn. The first attempt
+       pushed setInfectionTime / MortalityDuration / GrowthRate toward "finish
+       now" and did nothing: a bite still ran its full multi-day course, because
+       those three shape the infection *curve*, not the position on it. The
+       position is `CharacterStat.ZOMBIE_INFECTION`, compared against
+       `BodyDamage.InfectionLevelToZombify`. See forceKnox().
 
     Design note: this trait directly contradicts Humans: Are Resilient's
     Superimmunity, which blocks Knox entirely. Cross-module exclusion cannot go
@@ -61,16 +58,31 @@ local function infectWounds(player, damage)
     end
 end
 
---- Collapse the Knox timer. Guarded per call: see the header note.
-local function forceKnox(damage, data)
+--- Complete the Knox infection now.
+---
+--- The first attempt pushed setInfectionMortalityDuration / GrowthRate /
+--- InfectionTime toward "finish now" and did nothing observable - a bite still
+--- ran its normal multi-day course. Those three shape the *curve*, not the
+--- position on it.
+---
+--- The position is a stat: `CharacterStat.ZOMBIE_INFECTION`, which the engine
+--- compares against `BodyDamage.InfectionLevelToZombify`. Vanilla's own debug
+--- panel exposes exactly this as a slider (client/DebugUIs/DebugMenu/General/
+--- ISStatsAndBody.lua), which is the confirmation that it is the real lever.
+--- Maxing it puts the character at the zombify threshold immediately.
+local function forceKnox(player, damage, data)
     if data.SHAW_knoxForced then return end
     data.SHAW_knoxForced = true
 
+    local _, high = SHAW.statRange(CharacterStat.ZOMBIE_INFECTION)
+    SHAW.setStat(player, CharacterStat.ZOMBIE_INFECTION, high)
+
+    -- Collapse the curve as well, so anything still reading the timers agrees
+    -- with the stat rather than fighting it.
     pcall(function() damage:setInfectionMortalityDuration(0.01) end)
     pcall(function() damage:setInfectionGrowthRate(100) end)
-    pcall(function() damage:setInfectionTime(0) end)
 
-    SHAW.log("immuno: Knox forced to complete immediately")
+    SHAW.log("immuno: Knox forced - ZOMBIE_INFECTION set to %.1f", high)
 end
 
 local function apply(player, data)
@@ -86,7 +98,7 @@ local function apply(player, data)
     SHAW.addStat(player, CharacterStat.SICKNESS, SICKNESS_PER_TICK)
 
     if damage:isInfected() then
-        forceKnox(damage, data)
+        forceKnox(player, damage, data)
     else
         -- Cured or a fresh character: allow the force to fire again later.
         data.SHAW_knoxForced = nil

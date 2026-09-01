@@ -43,7 +43,7 @@ local DEFAULTS = {
     ADHDFocusMultiplier     = 15,
     ADHDFocusHours          = 6,
     ADHDStressThreshold     = 3,
-    EDSTripChance           = 8,
+    EDSTripChance           = 15,
     ColorBlindStrength      = 100,
 }
 

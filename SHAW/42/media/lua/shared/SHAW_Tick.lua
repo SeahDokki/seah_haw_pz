@@ -102,24 +102,58 @@ local function resolve(player, list)
     return active
 end
 
+--- How often the active-handler list is rebuilt, in real milliseconds.
+---
+--- It used to be resolved once and cached forever, and that was the single bug
+--- behind four traits doing nothing at all. The list got built on frame 1,
+--- before the character's traits were readable, so `hasTrait` answered wrongly
+--- for everything - and the wrong answer was then kept for the whole session.
+--- A dump showed one active handler, `colorblind`, on a character who did not
+--- have that trait, while the two traits they did have had no handlers.
+---
+--- Re-resolving is cheap: thirteen hasTrait calls every couple of seconds is
+--- nothing next to a per-frame dispatch. It also makes the list self-healing,
+--- which covers traits added or removed at runtime (the debug panel can do
+--- both) - previously an XP boost kept running after its trait was deleted.
+local RESOLVE_EVERY_MS = 2000
+
+--- Signature of a resolved list, so re-resolving only logs on a real change.
+local function signature(fast, slow)
+    local names = {}
+    for _, spec in ipairs(fast) do table.insert(names, spec.id) end
+    for _, spec in ipairs(slow) do table.insert(names, spec.id .. "(slow)") end
+    return table.concat(names, ", ")
+end
+
 local function sessionFor(player)
     local id = player:getPlayerNum()
     local session = sessions[id]
+    local now = getTimestampMs()
 
-    if not session or session.player ~= player then
-        session = {
-            player = player,
-            fast = resolve(player, SHAW.Tick.fast),
-            slow = resolve(player, SHAW.Tick.slow),
-            lastRun = {},
-        }
+    local stale = not session
+        or session.player ~= player
+        or (now - (session.resolvedAt or 0)) >= RESOLVE_EVERY_MS
+
+    if stale then
+        local fast = resolve(player, SHAW.Tick.fast)
+        local slow = resolve(player, SHAW.Tick.slow)
+        local sig = signature(fast, slow)
+
+        local previous = session and session.signature
+
+        session = session or { lastRun = {} }
+        session.player = player
+        session.fast = fast
+        session.slow = slow
+        session.signature = sig
+        session.resolvedAt = now
+        session.lastRun = session.lastRun or {}
         sessions[id] = session
 
-        local names = {}
-        for _, spec in ipairs(session.fast) do table.insert(names, spec.id) end
-        for _, spec in ipairs(session.slow) do table.insert(names, spec.id .. "(slow)") end
-        SHAW.log("player %d: %d active handler(s): %s",
-                 id, #names, #names > 0 and table.concat(names, ", ") or "none")
+        if sig ~= previous then
+            SHAW.log("player %d: %d active handler(s): %s",
+                     id, #fast + #slow, sig ~= "" and sig or "none")
+        end
     end
 
     return session
