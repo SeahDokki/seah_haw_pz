@@ -34,8 +34,8 @@ local function apply(player, data)
         return
     end
 
-    -- Some other trait has the floor. Do not stack episodes.
-    if SHAW.Incapacitate.isDown(player) then return end
+    -- Asleep, or another trait has the floor. Do not stack episodes.
+    if SHAW.isIncapable(player) then return end
 
     local now = SHAW.hours()
 

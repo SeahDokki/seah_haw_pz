@@ -32,6 +32,8 @@
     "Sandbox_SHAW_NarcolepsyMinHours_tooltip": "Shortest in-game gap between sleep attacks, before fatigue and heavy meals shorten it further.",
     "Sandbox_SHAW_NarcolepsyMaxHours": "Narcolepsy: longest gap (hours)",
     "Sandbox_SHAW_NarcolepsyMaxHours_tooltip": "Longest in-game gap between sleep attacks. Must be above the shortest gap.",
+    "Sandbox_SHAW_NarcolepsyDuration": "Narcolepsy: episode length (seconds)",
+    "Sandbox_SHAW_NarcolepsyDuration_tooltip": "How long the character is asleep. Real seconds, so it does not shift with day length. Damage still wakes them.",
     "Sandbox_SHAW_NeuralgiaMinMinutes": "Neuralgia: shortest gap (minutes)",
     "Sandbox_SHAW_NeuralgiaMinMinutes_tooltip": "Shortest in-game gap between pain spikes. The bible suggests 10-40 minutes.",
     "Sandbox_SHAW_NeuralgiaMaxMinutes": "Neuralgia: longest gap (minutes)",
@@ -52,8 +54,8 @@
     "Sandbox_SHAW_ADHDFocusHours_tooltip": "In-game hours the hyperfocus stays on one skill before rolling another.",
     "Sandbox_SHAW_ADHDStressThreshold": "ADHD: stress level that blocks actions",
     "Sandbox_SHAW_ADHDStressThreshold_tooltip": "Stress moodle level (0-4) at which the character refuses to read, wait or sleep. 4 disables the refusal.",
-    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos: ankle-gives chance (%)",
-    "Sandbox_SHAW_EDSTripChance_tooltip": "Chance per sprinting spell that an ankle gives out. Rolled once per continuous sprint, not per frame.",
+    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos: severe cramp chance (%)",
+    "Sandbox_SHAW_EDSTripChance_tooltip": "Chance per sprinting spell that a leg cramps severely. Rolled once per continuous sprint, not per frame.",
     "Sandbox_SHAW_ColorBlindStrength": "Colour Blind: desaturation (%)",
     "Sandbox_SHAW_ColorBlindStrength_tooltip": "How grey the world goes. 100 is fully greyscale. Single player only - see the README."
 }

@@ -32,6 +32,7 @@ local DEFAULTS = {
     EpilepsyDuration        = 18,
     NarcolepsyMinHours      = 5,
     NarcolepsyMaxHours      = 20,
+    NarcolepsyDuration      = 60,
     NeuralgiaMinMinutes     = 10,
     NeuralgiaMaxMinutes     = 40,
     TouretteMinMinutes      = 15,

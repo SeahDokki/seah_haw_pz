@@ -30,7 +30,10 @@ local FALL_MULTIPLIER = 0.45   -- how much of a normal recovery it keeps
 local APATHY_FROM_LEVEL = 3    -- unhappy moodle level at which swings can fail
 
 local function apply(player, data)
-    if SHAW.Incapacitate.isDown(player) then return end
+    -- Deliberately NOT guarded on SHAW.isIncapable(). This mirrors the
+    -- engine's own UNHAPPINESS delta, and the engine keeps moving it while
+    -- the character sleeps - skipping would let a whole night's worth of
+    -- depression escape the amplification.
 
     local current = SHAW.stat(player, CharacterStat.UNHAPPINESS)
     local previous = data.SHAW_lastUnhappiness

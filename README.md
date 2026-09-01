@@ -8,8 +8,9 @@ changes how you play — and hands you the points to pay for something better.
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20the%20mod-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/seahworld)
 [![License](https://img.shields.io/badge/License-Non--Commercial%20Source--Available-8A6C1A)](LICENSE)
 
-> ⚑ **Design phase.** The traits are defined, costed and translated into four languages — they appear in character
-> creation and can be picked. **None of their behaviour is implemented yet.** See [Status](#status).
+> ⚑ **First implementation, untested.** Ten of the thirteen traits have working behaviour; the three that need items
+> the mod does not ship yet do not. Nothing has been run in the game — see [Status](#status) and
+> [Testing](#testing).
 
 ---
 
@@ -52,7 +53,7 @@ capability with a permanent, recurring cost.
 | [Depressive](#depressive) | +6 | Depression that will not lift, and apathy in a fight |
 | [Immunocompromised](#immunocompromised) | +6 | Every wound infects; Knox turns you instantly |
 | [Asthmatic](#asthmatic) | +5 | Poor endurance, loud breathing, attacks under strain |
-| [Ehlers-Danlos Syndrome](#ehlers-danlos-syndrome) | +5 | Sprains, hairline fractures, ankles that give out |
+| [Ehlers-Danlos Syndrome](#ehlers-danlos-syndrome) | +5 | A leg cramps and gives out mid-sprint, and stays sore |
 | [Neuralgia](#neuralgia) | +5 | Random bolts of pain that lock you up |
 | [Tourette's](#tourettes) | +5 | An involuntary shout at the worst moment |
 | [Allergic](#allergic) | +4 | Sneezing in spring woodland; peanuts make you sick |
@@ -85,8 +86,11 @@ draws zombies. A light head injury is possible. A short confused phase follows.
 Sudden, unpredictable sleep onset — anywhere, any time.
 
 A base random timer runs constantly. The risk climbs after a heavy meal (the Stuffed moodle) or under deep fatigue, and
-drops slightly when you are well rested. You fall asleep on the spot for 30 seconds to 2 minutes of game time. You can
-be attacked while out; taking damage forces you awake.
+drops slightly when you are well rested. You fall asleep on the spot for around a minute. You can be attacked while
+out; taking damage forces you awake.
+
+This is real sleep, not a stand-in — you genuinely lose control. But the clock is **not** fast-forwarded the way a
+chosen night's sleep is, so an episode costs you the time and the exposure rather than skipping past both.
 
 ---
 
@@ -111,9 +115,11 @@ the value at all** — you are reading your own symptoms.
 
 *+6 points*
 
-Depression settles in and does not let go. The moodle climbs faster and falls harder than normal. At maximum
-depression the Hunger moodle is hidden — you no longer know whether you are hungry. At high depression there is a
-random chance you simply do not swing when you attack.
+Depression settles in and does not let go. The moodle climbs faster and falls harder than normal. At high depression
+there is a random chance you simply do not swing when you attack.
+
+> The design also called for the Hunger moodle to be hidden at maximum depression. **That is not possible from Lua** —
+> the moodle bar is a Java class with no per-moodle control. See [Open points](#open-points).
 
 ---
 
@@ -152,10 +158,14 @@ frequent and more severe.
 
 Joint hypermobility. Every sprint is a gamble.
 
-Sprain probability is significantly raised, as is hairline-fracture probability on impacts. Sprinting carries a chance
-of simply going down as an ankle gives. Sprains and light fractures take longer to heal than normal.
+Sprinting carries a chance that a leg **cramps severely** and gives out under you — you go down, and the leg stays
+stiff and painful long after you get up. Soreness heals more slowly than it should.
 
-Uses the game's *light fracture*, which exists. Dislocation does not, and is not modelled.
+The cramp is rolled once per continuous sprint, not per frame, so sprinting is a gamble rather than an impossibility.
+
+> The design originally called for sprains. **Sprains do not exist in Build 42** — there is no such injury in the API
+> at all. Severe muscle soreness is what the engine actually models, and it behaves the way the design wanted: it
+> hurts, it slows you, and it fades on its own.
 
 ---
 
@@ -192,8 +202,12 @@ the sneezing temporarily.
 
 *+4 points*
 
-The joints grind. Attack speed is reduced — a longer cooldown between swings — and your hands tire faster in a
-prolonged fight. Cold weather adds a further penalty.
+The joints grind. Your **hands cramp** through a long fight — the same mechanic as Ehlers-Danlos, but chronic and in
+the hands rather than one severe spike in a leg. Sore hands slow every deliberate action: reloading, first aid,
+crafting. Your hands also tire faster, and cold weather makes all of it worse.
+
+> The design asked for a longer cooldown between swings specifically. Build 42 exposes no attack-speed modifier, so the
+> slowdown arrives through hand soreness instead, which the engine already reads when timing actions.
 
 ---
 
@@ -219,8 +233,14 @@ Mutually exclusive with Fast Reader and Illiterate.
 
 *+2 points*
 
-The world rendered in black and white — a global desaturation filter. If a full-screen shader proves impossible from
-Lua, the fallback is a desaturated UI only.
+The world drained of colour.
+
+In **single player** this is true greyscale, via the engine's own desaturation control — no shader needed, and the
+result is properly luminance-correct.
+
+In **multiplayer** it is an approximation: a grey wash drawn on your client only. Colours really do desaturate, but
+contrast flattens too and the interface is tinted along with the world. The reason is that the engine's real
+desaturation is a *world* setting synced over the network — one player cannot have it without everyone having it.
 
 ---
 
@@ -248,15 +268,15 @@ not ship yet are untouched.
 | Trait | State | Notes |
 |---|---|---|
 | Epileptic | 🔷 Written, untested | Stress · fatigue · lit torch · nearby TV, on an accumulating trigger score |
-| Narcoleptic | 🔷 Written, untested | Knockdown rather than real sleep — see below |
+| Narcoleptic | 🔷 Written, untested | Real `setAsleep`, without the time skip. Damage wakes you |
 | Depressive | 🔶 Partial | Rise/fall rates and apathy done; hiding the Hunger moodle is **not possible** |
 | Immunocompromised | 🔶 Partial | Wound sepsis and illness solid; the instant Knox turn needs a bite to confirm |
-| Ehlers-Danlos | 🔶 Partial | **Sprains do not exist in B42** — built from stiffness and light fractures |
+| Ehlers-Danlos | 🔷 Written, untested | A severe leg cramp; **sprains do not exist in B42** |
 | Neuralgia | 🔷 Written, untested | |
 | Tourette's | 🔶 Partial | Draws zombies correctly, but **silent** — no audio asset yet |
-| Osteoarthritis | 🔶 Partial | Attack *cooldown* is not Lua-settable; uses stiffness and hand pain instead |
+| Osteoarthritis | 🔶 Partial | A chronic hand cramp. Attack *cooldown* itself is not Lua-settable |
 | ADHD | 🔶 Partial | Reading ×3, hyperfocus, stress/boredom done; refuses reading only, not waiting/sleeping |
-| Colour Blind | 🔷 Written, untested | Works via the climate desaturation float — **single player only** |
+| Colour Blind | 🔶 Partial | True greyscale in single player; an approximate local overlay in MP |
 | Diabetic | ❌ Not started | Blocked: needs glucometer, insulin, bovine insulin |
 | Asthmatic | ❌ Not started | Blocked: needs the inhaler and a breathing sound |
 | Allergic | ❌ Not started | Blocked: needs antihistamines and a sneeze sound |
@@ -268,9 +288,10 @@ Supporting pieces:
 | Trait definitions, costs, mutual exclusions | ✅ `scripts/SHAW_traits.txt` |
 | Trait registration and lazy handle lookup | ✅ `registries.lua`, `shared/SHAW_Traits.lua` |
 | Names and descriptions, EN · FR · ES · DE | ✅ `Translate/<LANG>/UI.json` |
-| 27 sandbox options — per-trait switches and tuning | ✅ `sandbox-options.txt` |
+| 28 sandbox options — per-trait switches and tuning | ✅ `sandbox-options.txt` |
 | Single update loop with per-trait throttling | ✅ `client/SHAW_Tick.lua` |
 | Shared knockdown primitive | ✅ `client/SHAW_Incapacitate.lua` |
+| Shared muscle-soreness primitive | ✅ `client/SHAW_Soreness.lua` |
 | In-game debug menu — force any episode, dump state | ✅ `client/SHAW_DebugMenu.lua` |
 | Checks: locale parity, IGUI keys, option/DEFAULTS drift | ✅ `tools/i18ncheck.py` |
 | **New items and their recipes** | ❌ Not started |
@@ -305,7 +326,7 @@ The order below is deliberate: it front-loads the traits whose mechanism is leas
 | 4 | Sleep attack | *Force* → *Sleep attack* | Drops for 30–120s. Take a hit → wakes immediately (`woken by damage`) |
 | 5 | Pain spike | *Force* → *Pain spike* | Drops ~10s, Pain moodle jumps |
 | 6 | Vocal tic | *Force* → *Vocal tic*, standing near zombies | Zombies turn toward you. **No sound — expected** |
-| 7 | Ankle gives | *Force* → *Ankle gives*, then sprint | Trip, leg stiffness and pain, sometimes a light fracture |
+| 7 | Severe cramp | *Force* → *Severe cramp*, then sprint | Leg gives out, you go down, and it stays stiff and painful afterwards |
 | 8 | Hyperfocus | *Force* → *Reroll hyperfocus*, then train the named skill | `+N bonus xp (x15)` in console; that skill races, others do not |
 | 9 | **Reading ×3** | Time a skill book with and without ADHD | Roughly three times as long, not faster |
 | 10 | ADHD refusal | Raise Stress to moodle 3+, try to read | Halo text, book does not open |
@@ -339,16 +360,19 @@ Carried over from the design bible, plus what surfaced while scaffolding against
 - **Depressive: hiding the Hunger moodle.** The moodle bar is `zombie.ui.MoodlesUI`, a Java class with no per-moodle
   Lua visibility control — it is not an ISUI panel a mod can subclass or wrap. `MoodleType.HUNGRY` exists as an enum
   value but nothing in Lua can suppress its row. Doing this means reimplementing the whole vanilla moodle widget.
-- **Ehlers-Danlos: sprains.** They do not exist in 42.20 — no `setSprained`, no `isSprained`, no Sprain buff anywhere
-  in the API. The bible's primary mechanic is unavailable, so the trait is built from joint stiffness (B42's
-  muscle-strain value) plus light fractures, which do exist.
+- **Ehlers-Danlos and Osteoarthritis: sprains.** They do not exist in 42.20 — no `setSprained`, no `isSprained`, no
+  Sprain buff anywhere in the API. Both traits now use **severe muscle soreness** instead, through the shared
+  `SHAW_Soreness.lua`: B42's stiffness value plus additional pain. Ehlers-Danlos cramps one leg hard and episodically;
+  Osteoarthritis aches in the hands chronically. Same system, two schedules.
 - **Osteoarthritis: attack cooldown.** `BodyDamage` has `getMeleeCombatMod()` with no setter, and there is no
-  `setAttackSpeed`. The trait uses stiffness and hand pain instead — `adjustMaxTime` already multiplies action
-  duration by hand pain, so the felt result is close and the mechanism is the engine's own.
-- **Narcoleptic: real sleep.** `setAsleep(true)` fast-forwards time and restores fatigue, which would turn the trait
-  into a *benefit* — free hours, free rest, and the danger skipped past. It uses the knockdown primitive instead, so
-  the character is genuinely helpless in real time. Consequence: they are not "asleep" as far as the engine is
-  concerned, so sleep-related moodles do not move during an episode.
+  `setAttackSpeed`. Sore hands get most of the way there: `adjustMaxTime` already multiplies action duration by
+  `(1 + handPain/300)`, so reloading, first aid and crafting all slow as the ache builds.
+- **Colour Blind: per-player greyscale.** There is none. `IsoPlayer` exposes no colour state, and `setOptionScreenFilter`
+  is texture filtering, not colour. The only true desaturation is `ClimateManager.FLOAT_DESATURATION`, which is
+  **networked** — `ClimateFloat` carries `writeAdmin`/`readAdmin`, and `ClimateManager` has
+  `PacketClientChangedAdminVars` and a `Denied ClimatePacket` path. A client either gets refused or changes the weather
+  for everyone. So: true greyscale in single player, and a local grey overlay in multiplayer, which genuinely reduces
+  saturation but also flattens contrast and tints the UI.
 
 ### Still open
 

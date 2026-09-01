@@ -119,7 +119,7 @@ local function apply(player, data)
         return
     end
 
-    if SHAW.Incapacitate.isDown(player) then return end
+    if SHAW.isIncapable(player) then return end
 
     local now = SHAW.hours()
 

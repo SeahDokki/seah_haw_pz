@@ -165,6 +165,17 @@ option SHAW.NarcolepsyMaxHours
     translation = SHAW_NarcolepsyMaxHours,
 }
 
+option SHAW.NarcolepsyDuration
+{
+    type = integer,
+    min = 5,
+    max = 600,
+    default = 60,
+
+    page = SHAWTuning,
+    translation = SHAW_NarcolepsyDuration,
+}
+
 option SHAW.NeuralgiaMinMinutes
 {
     type = integer,

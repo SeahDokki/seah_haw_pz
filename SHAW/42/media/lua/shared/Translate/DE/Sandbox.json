@@ -32,6 +32,8 @@
     "Sandbox_SHAW_NarcolepsyMinHours_tooltip": "Kürzester Spielabstand zwischen Schlafattacken, bevor Müdigkeit und schwere Mahlzeiten ihn weiter verkürzen.",
     "Sandbox_SHAW_NarcolepsyMaxHours": "Narkolepsie: längster Abstand (Stunden)",
     "Sandbox_SHAW_NarcolepsyMaxHours_tooltip": "Längster Spielabstand zwischen Schlafattacken. Muss über dem kürzesten Abstand liegen.",
+    "Sandbox_SHAW_NarcolepsyDuration": "Narkolepsie: Dauer der Episode (Sekunden)",
+    "Sandbox_SHAW_NarcolepsyDuration_tooltip": "Wie lange die Figur schläft. Echte Sekunden, also unabhängig von der Taglänge. Schaden weckt sie weiterhin.",
     "Sandbox_SHAW_NeuralgiaMinMinutes": "Neuralgie: kürzester Abstand (Minuten)",
     "Sandbox_SHAW_NeuralgiaMinMinutes_tooltip": "Kürzester Spielabstand zwischen Schmerzspitzen. Die Bibel schlägt 10-40 Minuten vor.",
     "Sandbox_SHAW_NeuralgiaMaxMinutes": "Neuralgie: längster Abstand (Minuten)",
@@ -52,8 +54,8 @@
     "Sandbox_SHAW_ADHDFocusHours_tooltip": "Spielstunden, die der Hyperfokus auf einer Fertigkeit bleibt, bevor eine andere gewürfelt wird.",
     "Sandbox_SHAW_ADHDStressThreshold": "ADHS: Stresslevel, das Aktionen blockiert",
     "Sandbox_SHAW_ADHDStressThreshold_tooltip": "Stress-Moodle-Level (0-4), ab dem die Figur sich weigert zu lesen, zu warten oder zu schlafen. 4 deaktiviert die Weigerung.",
-    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos: Chance auf nachgebenden Knöchel (%)",
-    "Sandbox_SHAW_EDSTripChance_tooltip": "Chance pro Sprintphase, dass ein Knöchel nachgibt. Einmal pro durchgehendem Sprint gewürfelt, nicht pro Frame.",
+    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos: Chance auf schweren Krampf (%)",
+    "Sandbox_SHAW_EDSTripChance_tooltip": "Chance pro Sprintphase, dass ein Bein schwer verkrampft. Einmal pro durchgehendem Sprint gewürfelt, nicht pro Frame.",
     "Sandbox_SHAW_ColorBlindStrength": "Farbenblind: Entsättigung (%)",
     "Sandbox_SHAW_ColorBlindStrength_tooltip": "Wie grau die Welt wird. 100 ist reines Grau. Nur Einzelspieler - siehe README."
 }

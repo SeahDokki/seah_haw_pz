@@ -6,7 +6,9 @@
     "IGUI_SHAW_SleepAttack": "Impossible de rester éveillé",
     "IGUI_SHAW_PainSpike": "Douleur atroce",
     "IGUI_SHAW_Apathy": "Vous n'arrivez pas à frapper",
-    "IGUI_SHAW_AnkleGives": "Votre cheville lâche",
+    "IGUI_SHAW_LegCramp": "Une courbature bloque votre jambe",
+    "IGUI_SHAW_HandCramp": "Vos mains se bloquent",
+    "IGUI_SHAW_SleepOver": "Vous reprenez vos esprits",
     "IGUI_SHAW_TooStressed": "Impossible de vous y tenir",
     "IGUI_SHAW_FocusShift": "Votre focus se déplace",
     "IGUI_SHAW_WoundTurned": "La plaie s'est infectée"

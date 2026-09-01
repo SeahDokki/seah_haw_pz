@@ -1,40 +1,58 @@
 --[[
     Humans: Are Weak - Colour Blind (SHAW:colorblind, +2 pts)
 
-    Design: the world rendered in greyscale, with "desaturated UI only" as the
-    stated fallback if a shader proves impossible.
+    Design: the world in greyscale. The bible's stated fallback was "desaturated
+    UI only".
 
-    The bible flagged shader feasibility as unconfirmed. It turns out no shader
-    is needed: the engine already has a global desaturation float driven by the
-    weather system, and it is reachable from Lua.
+    ---------------------------------------------------------------------------
+    Can this affect only the local player? Investigated properly. Short answer:
+    not with true greyscale. There is no per-player render state in 42.20 -
+    IsoPlayer exposes nothing colour-related beyond setTagColor and
+    setWearingNightVisionGoggles, and Core's setOptionScreenFilter is texture
+    filtering (linear/nearest), not colour.
 
-        local option = getClimateManager():getClimateFloat(ClimateManager.FLOAT_DESATURATION)
-        option:setEnableAdmin(true)
-        option:setAdminValue(1.0)
+    The only true desaturation is ClimateManager's FLOAT_DESATURATION, and it is
+    **networked**, not local. ClimateManager$ClimateFloat carries writeAdmin /
+    readAdmin and references zombie.network.GameClient; ClimateManager itself
+    has PacketClientChangedAdminVars, serverReceiveClientChangeAdminVars,
+    PacketAdminVarsUpdate and a "Denied ClimatePacket" rejection path. So a
+    client setting it either gets refused by the server or changes the weather
+    for everyone on it. It is a world setting with an admin gate, full stop.
 
-    That is the same path the game's own climate debug panel uses
-    (client/DebugUIs/DebugMenu/Climate/PopupColorEdit.lua), so it is a supported
-    override rather than a trick.
+    So the trait ships two paths:
 
-    THE CATCH, and it is a real one: this is a *world* setting, not a per-player
-    one. There is no per-character desaturation in 42.20. Consequences:
+      single player   ClimateManager desaturation. True greyscale, correct
+                      luminance, costs nothing per frame.
+      multiplayer     a local grey overlay drawn on this client only. Alpha
+                      blending toward grey does genuinely reduce saturation -
+                      result = (1-a)*colour + a*grey - so colours really do wash
+                      out. It also flattens contrast, which true greyscale would
+                      not, so it is an approximation. But it is local, it is
+                      honest, and it is better than the bible's "UI only".
 
-      - Single player: works exactly as designed.
-      - Multiplayer: the value belongs to the world. Setting it client-side may
-        be overwritten by the server's climate sync, and if it is not, it is
-        still the wrong shape - one colour-blind player would grey the world for
-        anyone sharing that client. So the trait is DISABLED outside single
-        player rather than applied and hoped for.
+    Split screen is the one case the single-player path gets wrong: two local
+    players share one ClimateManager, so one colour-blind character would grey
+    the screen for both. The overlay path is used whenever more than one local
+    player exists, for that reason.
 
-    The weather system also writes this float, so the admin override has to be
-    re-asserted rather than set once - hence the periodic handler instead of a
-    one-shot on character creation.
+    One accepted wart on the overlay path: an ISUIElement draws in the UI pass,
+    so it tints the interface as well as the world. setAlwaysOnTop(false) keeps
+    it as low as the UI layer allows, but it cannot get underneath. Since the
+    bible's own fallback was "desaturated UI only", tinting both is strictly
+    more than was asked for, and the alternative - reimplementing the world
+    render - is absurd for a 2-point trait.
+    ---------------------------------------------------------------------------
 ]]
 
 SHAW = SHAW or {}
 
--- Whether this session has an override in place, so it can be lifted cleanly.
-local applied = false
+-- Whether this session holds a climate override, so it can be lifted cleanly.
+local climateApplied = false
+
+-- The multiplayer overlay, created lazily.
+local overlay = nil
+
+-- ------------------------------------------------------ climate (true grey) --
 
 local function desaturationOption()
     local climate = getClimateManager()
@@ -48,39 +66,96 @@ local function desaturationOption()
     return option
 end
 
-local function setDesaturation(value)
+local function holdClimate(strength)
     local option = desaturationOption()
     if not option then return false end
 
+    -- Re-asserted every time: the weather system writes this float too, so a
+    -- one-shot set is quietly undone by the next climate tick.
     local ok = pcall(function()
         option:setEnableAdmin(true)
-        option:setAdminValue(value)
+        option:setAdminValue(strength)
     end)
+
+    if ok and not climateApplied then
+        climateApplied = true
+        SHAW.log("colorblind: climate desaturation held at %.2f", strength)
+    end
     return ok
 end
 
---- Hand the world's colour back.
-local function release()
-    if not applied then return end
-    applied = false
+local function releaseClimate()
+    if not climateApplied then return end
+    climateApplied = false
 
     local option = desaturationOption()
-    if not option then return end
+    if option then
+        pcall(function() option:setEnableAdmin(false) end)
+    end
+    SHAW.log("colorblind: climate desaturation released")
+end
 
-    pcall(function()
-        option:setEnableAdmin(false)
-    end)
+-- --------------------------------------------------- overlay (local, approx) --
 
-    SHAW.log("colorblind: desaturation override released")
+local SHAWColorBlindOverlay = ISUIElement:derive("SHAWColorBlindOverlay")
+
+function SHAWColorBlindOverlay:new()
+    local o = ISUIElement.new(self, 0, 0, getCore():getScreenWidth(), getCore():getScreenHeight())
+    o.strength = 0
+    -- Mid grey. Blending toward this is what removes the saturation; a darker
+    -- grey would just dim the screen.
+    o.grey = 0.5
+    return o
+end
+
+function SHAWColorBlindOverlay:render()
+    -- Track resolution changes rather than caching the size at creation.
+    self:setWidth(getCore():getScreenWidth())
+    self:setHeight(getCore():getScreenHeight())
+    self:drawRect(0, 0, self.width, self.height,
+                  self.strength, self.grey, self.grey, self.grey)
+end
+
+local function holdOverlay(strength)
+    if not overlay then
+        overlay = SHAWColorBlindOverlay:new()
+        overlay:initialise()
+        overlay:instantiate()
+        -- Behind the UI, so the interface stays readable.
+        overlay:addToUIManager()
+        overlay:setAlwaysOnTop(false)
+        SHAW.log("colorblind: local overlay created")
+    end
+    -- Capped: at 1.0 the screen is flat grey and unplayable.
+    overlay.strength = SHAW.clamp(strength * 0.75, 0, 0.75)
+    overlay:setVisible(true)
+end
+
+local function releaseOverlay()
+    if not overlay then return end
+    overlay:setVisible(false)
+    overlay:removeFromUIManager()
+    overlay = nil
+    SHAW.log("colorblind: local overlay removed")
+end
+
+-- ------------------------------------------------------------------- apply --
+
+--- True when the ClimateManager route is safe: exactly one local player, and
+--- no server that would reject or broadcast the change.
+local function canUseClimate()
+    if not SHAW.isSinglePlayer() then return false end
+    local ok, count = pcall(function() return getNumActivePlayers() end)
+    if ok and count and count > 1 then return false end
+    return true
+end
+
+local function release()
+    releaseClimate()
+    releaseOverlay()
 end
 
 local function apply(player)
-    -- World-level setting: refuse to touch it outside single player. See header.
-    if not SHAW.isSinglePlayer() then
-        if applied then release() end
-        return
-    end
-
     local strength = SHAW.clamp((SHAW.Config.get("ColorBlindStrength") or 100) / 100, 0, 1)
 
     if strength <= 0 then
@@ -88,14 +163,15 @@ local function apply(player)
         return
     end
 
-    -- Re-asserted every time: the weather system writes this float too, so a
-    -- one-shot set is quietly undone by the next climate tick.
-    if setDesaturation(strength) then
-        if not applied then
-            applied = true
-            SHAW.log("colorblind: desaturation held at %.2f", strength)
-        end
+    if canUseClimate() then
+        releaseOverlay()
+        if holdClimate(strength) then return end
+        -- Climate route unavailable after all; fall through to the overlay.
+    else
+        releaseClimate()
     end
+
+    holdOverlay(strength)
 end
 
 SHAW.Tick.register{
@@ -106,5 +182,5 @@ SHAW.Tick.register{
     fn = apply,
 }
 
--- A character without the trait, or a new one, must not inherit the override.
+-- A character without the trait, or a new one, must not inherit either effect.
 Events.OnCreatePlayer.Add(release)

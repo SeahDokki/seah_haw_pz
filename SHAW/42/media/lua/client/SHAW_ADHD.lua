@@ -122,7 +122,7 @@ end
 -- ------------------------------------------------------- stress & boredom --
 
 local function apply(player, data)
-    if SHAW.Incapacitate.isDown(player) then return end
+    if SHAW.isIncapable(player) then return end
 
     SHAW.addStat(player, CharacterStat.STRESS, STRESS_PER_TICK)
     SHAW.addStat(player, CharacterStat.BOREDOM, BOREDOM_PER_TICK)

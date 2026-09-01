@@ -1,88 +1,61 @@
 --[[
     Humans: Are Weak - Ehlers-Danlos Syndrome (SHAW:ehlersdanlos, +5 pts)
 
-    Design: raised sprain probability, raised light-fracture probability on
-    impacts, a chance to fall mid-sprint as an ankle gives, and slower recovery.
+    Design: joint hypermobility. Something gives out mid-sprint, and recovery
+    from it is slower than normal.
 
-    A correction to the bible. It says the trait "uses light fracture (exists in
-    game) - not dislocation (does not exist)". Half right for 42.20: fractures
-    exist and are reachable (BodyPart:setFractureTime, :setSplint,
-    :getFractureTime), but **sprains do not exist either**. There is no sprain
-    anywhere in the Lua API or in BodyPart's method table - no setSprained, no
-    isSprained, no Sprain buff. The bible's primary mechanic is not available.
+    The bible asked for sprains. Sprains do not exist in Build 42.20 - no
+    setSprained, no isSprained, no Sprain buff anywhere in BodyPart. So the
+    mechanic is a **severe cramp** instead: a hard spike of stiffness and pain
+    in one leg, which is what the engine does model (see SHAW_Soreness.lua).
+    Same felt outcome - the leg stops cooperating and stays sore - reached
+    through a real system rather than a missing one.
 
-    So the trait is built from what the engine does have:
+    The cramp also drops the character, because a leg seizing at a sprint means
+    going down. That part uses the shared knockdown.
 
-      - joint stiffness   BodyPart:setStiffness(). B42's muscle-strain value,
-                          and the closest thing to a sprain: a joint that hurts
-                          and slows you down for a while. Applied to the leg the
-                          ankle gave out on.
-      - light fracture    setFractureTime() with a short time, for real impacts.
-      - the trip          the shared knockdown, rolled once per sprint rather
-                          than per frame.
+    Rolled once per continuous sprint, not per frame. At 60fps an 8% per-frame
+    chance fires within the first stride, every time - it has to be per sprint
+    or the trait is simply "you cannot sprint".
 
-    Rolled once per continuous sprint. Rolling per frame would make sprinting
-    instantly fatal at any sane probability - at 60fps an 8% per-frame chance
-    fires within the first stride, every time.
+    Still not implemented: the bible also wants raised light-fracture chance on
+    impacts generally. That needs a damage hook and is tracked in the README.
 ]]
 
 SHAW = SHAW or {}
 
-local TRIP_SECONDS = 4
-local ANKLE_STIFFNESS = 55
-local ANKLE_PAIN = 30
-local ANKLE_FRACTURE_CHANCE = 0.25
-local ANKLE_FRACTURE_TIME = 20
+local CRAMP_SECONDS = 4
 
--- Recovery drag: how much of the engine's stiffness recovery is given back.
+-- A severe cramp. Deliberately high: this is the trait's headline event and
+-- should be felt for a while afterwards, not shrugged off in ten seconds.
+local CRAMP_STIFFNESS = 70
+local CRAMP_PAIN = 40
+
+-- How much of the engine's stiffness recovery is handed back each tick.
 local RECOVERY_DRAG = 0.5
 
-local LEGS = {
-    { low = BodyPartType.LowerLeg_L, foot = BodyPartType.Foot_L },
-    { low = BodyPartType.LowerLeg_R, foot = BodyPartType.Foot_R },
-}
+local function cramp(player, data)
+    local leg = SHAW.pick(SHAW.Soreness.LEGS)
+    if not leg then return end
 
-local function ankleGives(player)
-    local leg = SHAW.pick(LEGS)
-    local damage = player:getBodyDamage()
-    if not damage or not leg then return end
-
-    if not SHAW.Incapacitate.begin(player, TRIP_SECONDS, "trip", "IGUI_SHAW_AnkleGives") then
+    if not SHAW.Incapacitate.begin(player, CRAMP_SECONDS, "cramp", "IGUI_SHAW_LegCramp") then
         return
     end
 
-    for _, partType in ipairs({ leg.low, leg.foot }) do
-        local part = damage:getBodyPart(partType)
-        if part then
-            part:setStiffness(math.max(part:getStiffness(), ANKLE_STIFFNESS))
-            part:setAdditionalPain(math.max(part:getAdditionalPain(), ANKLE_PAIN))
-        end
-    end
-
-    -- Sometimes the joint going is not the worst of it.
-    if SHAW.chance(ANKLE_FRACTURE_CHANCE) then
-        local part = damage:getBodyPart(leg.low)
-        if part and part:getFractureTime() <= 0 then
-            part:setFractureTime(ANKLE_FRACTURE_TIME)
-            SHAW.log("eds: light fracture in the lower leg")
-        end
-    end
-
-    SHAW.log("eds: ankle gave out")
+    SHAW.Soreness.raise(player, leg, CRAMP_STIFFNESS, CRAMP_PAIN)
+    SHAW.log("eds: severe cramp in a leg")
 end
 
 local function apply(player, data)
-    if SHAW.Incapacitate.reason(player) == "trip" then
+    if SHAW.Incapacitate.reason(player) == "cramp" then
         SHAW.Incapacitate.tick(player)
         return
     end
 
-    if SHAW.Incapacitate.isDown(player) then return end
+    if SHAW.isIncapable(player) then return end
 
-    local sprinting = player:isSprinting()
-
-    if sprinting then
-        -- One roll per continuous sprint. The flag clears when they stop.
+    if player:isSprinting() then
+        -- One roll per continuous sprint. The latch clears when they stop.
         if not data.SHAW_edsSprintRolled then
             data.SHAW_edsSprintRolled = true
 
@@ -92,7 +65,7 @@ local function apply(player, data)
             data.SHAW_edsForce = nil
 
             if forced or SHAW.chance(SHAW.Config.probability("EDSTripChance")) then
-                ankleGives(player)
+                cramp(player, data)
                 return
             end
         end
@@ -100,30 +73,10 @@ local function apply(player, data)
         data.SHAW_edsSprintRolled = false
     end
 
-    -- Slower recovery: hand back part of whatever stiffness the engine just
-    -- healed off the legs. Tracked per part so a limb that was never stiff is
-    -- left alone.
-    local damage = player:getBodyDamage()
-    if not damage then return end
-
+    -- Slower recovery, across both legs.
     data.SHAW_edsStiffness = data.SHAW_edsStiffness or {}
-    local remembered = data.SHAW_edsStiffness
-
-    for _, leg in ipairs(LEGS) do
-        for _, partType in ipairs({ leg.low, leg.foot }) do
-            local part = damage:getBodyPart(partType)
-            if part then
-                local key = BodyPartType.ToIndex(partType)
-                local now = part:getStiffness()
-                local before = remembered[key]
-
-                if before ~= nil and now < before then
-                    part:setStiffness(now + (before - now) * RECOVERY_DRAG)
-                end
-
-                remembered[key] = part:getStiffness()
-            end
-        end
+    for _, leg in ipairs(SHAW.Soreness.LEGS) do
+        SHAW.Soreness.dragRecovery(player, leg, data.SHAW_edsStiffness, RECOVERY_DRAG)
     end
 end
 

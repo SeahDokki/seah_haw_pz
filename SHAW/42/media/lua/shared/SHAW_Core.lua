@@ -152,6 +152,22 @@ function SHAW.moodle(player, moodleType)
     return moodles:getMoodleLevel(moodleType) or 0
 end
 
+-- ------------------------------------------------------------- incapacity --
+
+--- True when the character is in no state to be acted on: knocked down by a
+--- seizure, cramp or pain spike, or asleep - whether from narcolepsy or an
+--- ordinary night in a bed.
+---
+--- Trait handlers should open with this rather than checking either condition
+--- alone. Pushing stats onto a sleeping character is invisible to the player
+--- and quietly breaks the trait's pacing.
+function SHAW.isIncapable(player)
+    if not player then return true end
+    if player:isAsleep() then return true end
+    if SHAW.Incapacitate and SHAW.Incapacitate.isDown(player) then return true end
+    return false
+end
+
 -- ------------------------------------------------------------------ noise --
 
 --- Emit a noise the zombie AI can hear, centred on the player.

@@ -32,6 +32,8 @@
     "Sandbox_SHAW_NarcolepsyMinHours_tooltip": "Intervalle de jeu le plus court entre deux endormissements, avant que fatigue et repas copieux ne le raccourcissent.",
     "Sandbox_SHAW_NarcolepsyMaxHours": "Narcolepsie : intervalle maximal (heures)",
     "Sandbox_SHAW_NarcolepsyMaxHours_tooltip": "Intervalle de jeu le plus long entre deux endormissements. Doit être supérieur à l'intervalle minimal.",
+    "Sandbox_SHAW_NarcolepsyDuration": "Narcolepsie : durée de l'épisode (secondes)",
+    "Sandbox_SHAW_NarcolepsyDuration_tooltip": "Durée du sommeil. En secondes réelles, donc indépendante de la longueur du jour. Les dégâts réveillent toujours.",
     "Sandbox_SHAW_NeuralgiaMinMinutes": "Névralgie : intervalle minimal (minutes)",
     "Sandbox_SHAW_NeuralgiaMinMinutes_tooltip": "Intervalle de jeu le plus court entre deux pics de douleur. La bible suggère 10-40 minutes.",
     "Sandbox_SHAW_NeuralgiaMaxMinutes": "Névralgie : intervalle maximal (minutes)",
@@ -52,8 +54,8 @@
     "Sandbox_SHAW_ADHDFocusHours_tooltip": "Heures de jeu pendant lesquelles l'hyperfocus reste sur une compétence avant d'en tirer une autre.",
     "Sandbox_SHAW_ADHDStressThreshold": "TDAH : niveau de stress bloquant les actions",
     "Sandbox_SHAW_ADHDStressThreshold_tooltip": "Niveau du moodle Stress (0-4) à partir duquel le personnage refuse de lire, attendre ou dormir. 4 désactive le refus.",
-    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos : chance de lâcher de cheville (%)",
-    "Sandbox_SHAW_EDSTripChance_tooltip": "Chance, par phase de sprint, qu'une cheville lâche. Tirée une fois par sprint continu, pas par frame.",
+    "Sandbox_SHAW_EDSTripChance": "Ehlers-Danlos : chance de courbature sévère (%)",
+    "Sandbox_SHAW_EDSTripChance_tooltip": "Chance, par phase de sprint, qu'une jambe se bloque d'une courbature sévère. Tirée une fois par sprint continu, pas par frame.",
     "Sandbox_SHAW_ColorBlindStrength": "Daltonien : désaturation (%)",
     "Sandbox_SHAW_ColorBlindStrength_tooltip": "Degré de gris du monde. 100 = niveaux de gris complets. Solo uniquement - voir le README."
 }

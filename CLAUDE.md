@@ -187,6 +187,21 @@ option:setAdminValue(1.0)
 It is a **world** setting, so it is single-player only, and the weather system overwrites it - the override has to be
 re-asserted periodically rather than set once.
 
+**Real sleep is usable, and the fast-forward is opt-in.** `player:setAsleep(true)` does not accelerate time by itself.
+The speed-up during a normal night is Lua-driven: `ISSleepDialog` calls `UIManager.getSpeedControls():SetCurrentGameSpeed(3)`,
+and only when `IsoPlayer.allPlayersAsleep()`. Skip that call and `getSleepingEvent():setPlayerFallAsleep()`, and you get
+a character who is genuinely asleep - helpless, attackable, no control - while the world runs at normal speed. That is
+what narcolepsy wants. `UIManager.FadeOut`/`FadeIn` handle the screen; `FadeIn` exists in the Java class but is unused
+by vanilla Lua, so it is called inside `pcall`. Always set `setForceWakeUpTime` as a safety net so a lost Lua timer
+cannot strand a character asleep forever.
+
+**Nothing gives one player their own screen colour.** `IsoPlayer` has no colour state;
+`Core:setOptionScreenFilter` is texture filtering (linear/nearest). `ClimateManager.FLOAT_DESATURATION` is the only real
+desaturation and it is networked - `ClimateFloat` carries `writeAdmin`/`readAdmin`, and `ClimateManager` has
+`PacketClientChangedAdminVars`, `serverReceiveClientChangeAdminVars` and a `Denied ClimatePacket` rejection path. For a
+local-only effect the ceiling is an `ISUIElement` drawing a translucent grey rect over the screen, which desaturates
+by blending but also flattens contrast and tints the UI.
+
 **Timers use the game clock, never the wall clock.** `getGameTime():getWorldAgeHours()` (wrapped as `SHAW.hours()`) is
 fractional, monotonic, saved with the world, and does not advance while paused. `getTimestampMs()` keeps running in the
 menu, so a cooldown built on it can be skipped by quitting to the main menu. Real milliseconds are used for exactly one
@@ -266,9 +281,20 @@ there is no `server/` counterpart and no command protocol. The one thing that wo
 deciding *world* state, and no trait here does. Colour Blind comes closest and is single-player-gated for exactly that
 reason.
 
-**Three traits share one knockdown.** Epilepsy, narcolepsy and neuralgia all mean "drop the character, stop what they
-were doing, hold them there, hand control back". `SHAW_Incapacitate.lua` owns it, keyed by a `reason` string so each
-trait only ticks its own episode and they cannot stack. Its state is intentionally **not** in modData: an episode lasts
+**Two primitives are shared, and both exist because two traits wanted the same thing.**
+
+`SHAW_Incapacitate.lua` - "drop the character, stop what they were doing, hold them there, hand control back". Used by
+epilepsy, neuralgia and the Ehlers-Danlos cramp, keyed by a `reason` string so each trait only ticks its own episode
+and they cannot stack. Narcolepsy does **not** use it: it uses real sleep, see below.
+
+`SHAW_Soreness.lua` - severe muscle soreness via `BodyPart:setStiffness` plus additional pain, with a recovery-drag
+helper. Ehlers-Danlos cramps one leg hard and episodically; osteoarthritis aches in the hands chronically. If a third
+trait ever needs a sore limb, it goes here rather than growing its own copy.
+
+`SHAW.isIncapable(player)` in Core is the guard every trait handler should open with - it covers both the knockdown and
+`isAsleep()`. Checking only one of the two lets a trait push stats onto a sleeping character, which is invisible to the
+player and quietly wrecks the trait's pacing. The one deliberate exception is Depressive, which mirrors the engine's own
+UNHAPPINESS delta and must keep doing so overnight. Its state is intentionally **not** in modData: an episode lasts
 seconds, so persisting it would add a throwaway timestamp to the save schema and a stale one would strand a character
 on the floor after a reload.
 
@@ -290,12 +316,12 @@ README's open points. Do not "fix" one without reading the note first - they are
 | Trait | Bible asks for | Why not, and what it does instead |
 |---|---|---|
 | Depressive | Hide the Hunger moodle | `MoodlesUI` is Java with no per-moodle Lua control. Not done at all |
-| Ehlers-Danlos | Sprains | Sprains do not exist in 42.20. Uses stiffness + light fractures |
-| Osteoarthritis | Longer attack cooldown | No attack-speed setter. Uses stiffness + hand pain via `adjustMaxTime` |
-| Narcoleptic | Fall asleep | `setAsleep` fast-forwards time and restores fatigue - a *benefit*. Uses the knockdown |
+| Ehlers-Danlos | Sprains | Sprains do not exist in 42.20. Uses a severe leg cramp (soreness) |
+| Osteoarthritis | Longer attack cooldown | No attack-speed setter. Chronic hand cramp; `adjustMaxTime` reads hand pain |
+| Narcoleptic | Fall asleep | Uses real `setAsleep`. Time is NOT accelerated - see below |
 | ADHD | Refuse read/wait/sleep | Only reading has a single chokepoint (`isValid`). Reading only |
 | Tourette's | A vocal tic | Draws zombies via `addSound`, but silent: audio must be human-authored (LICENSE §4) |
-| Colour Blind | Greyscale world | Reachable, but it is a world setting. Single player only |
+| Colour Blind | Greyscale world | True greyscale is world-scoped and networked. SP: real. MP: local grey overlay |
 
 ## ModData schema (`player:getModData()`)
 

@@ -50,12 +50,12 @@ local function forceTic()
     print("[SHAW] debug: vocal tic armed")
 end
 
-local function forceAnkle()
+local function forceCramp()
     local p = player()
     if not p then return end
     -- Clear the once-per-sprint latch and guarantee the next roll succeeds.
     p:getModData().SHAW_edsSprintRolled = false
-    print("[SHAW] debug: sprint now - the next sprint rolls at 100%")
+    print("[SHAW] debug: sprint now - the next sprint cramps for certain")
     p:getModData().SHAW_edsForce = true
 end
 
@@ -84,6 +84,7 @@ local TRACKED = {
     "SHAW_neuralgiaNext", "SHAW_touretteNext",
     "SHAW_tdahFocusSkill", "SHAW_tdahFocusTimer",
     "SHAW_lastUnhappiness", "SHAW_knoxForced", "SHAW_edsSprintRolled",
+    "SHAW_arthritisAnnounced",
 }
 
 local function dumpState()
@@ -150,7 +151,7 @@ local function buildMenu(playerIndex, context)
     trigger:addOption("Sleep attack", nil, forceSleepAttack)
     trigger:addOption("Pain spike", nil, forcePainSpike)
     trigger:addOption("Vocal tic", nil, forceTic)
-    trigger:addOption("Ankle gives (next sprint)", nil, forceAnkle)
+    trigger:addOption("Severe cramp (next sprint)", nil, forceCramp)
     trigger:addOption("Reroll hyperfocus", nil, rerollFocus)
 
     local inspect = ISContextMenu:getNew(menu)
