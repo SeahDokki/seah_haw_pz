@@ -67,14 +67,38 @@ humans_are_weak/        <- repo root
         sandbox-options.txt
         scripts/        <- trait and profession definitions
         lua/
-          shared/       <- constants, config, pure logic (both sides)
-          client/       <- UI, sound, visual effects
-          server/       <- world state
+          shared/       <- infrastructure: config, core, tick, primitives
+          client/       <- one file per trait, nothing else
+          server/       <- empty; no trait decides world state
           shared/Translate/<LANG>/*.json
 ```
 
 `mod.info` is flat `key=value`. The `id` is what the mods menu and save files key on, so it must never change once a
 save exists.
+
+## Load order (this has already broken the mod once)
+
+Project Zomboid loads `media/lua/shared/` before `media/lua/client/`, and **within a folder it loads files in
+alphabetical order**. That is the whole rule, and it is easy to forget because nothing announces it.
+
+It bit this mod on the first run. Every trait module calls `SHAW.Tick.register{...}` at *file scope*. The dispatcher
+lived in `client/SHAW_Tick.lua`, which is 13th of 14 alphabetically - so `client/SHAW_ADHD.lua`, first in the alphabet,
+indexed a nil `SHAW.Tick` and died. All ten traits would have failed the same way; ADHD only failed first.
+
+So the split is now a rule, not a preference:
+
+| Folder | Holds | Constraint |
+|---|---|---|
+| `shared/` | Config, Core, Tick, Incapacitate, Soreness | anything referenced at another file's *load* time |
+| `client/` | one file per trait | may only reference `shared/` things, and only from inside functions |
+
+`Incapacitate` and `Soreness` moved to `shared/` too. They technically worked in `client/` because every reference to
+them is inside a function body, but that is luck: adding one file-scope `local ARMS = SHAW.Soreness.ARMS` to an
+alphabetically-earlier trait would have reintroduced the same crash silently.
+
+Two things that ARE safe at file scope, confirmed on a live run: Java-exposed globals (`Perks.*`, `BodyPartType.*`,
+`ISUIElement`) and vanilla Lua classes reached through `require`. It is only *this mod's own* cross-file state that
+needs the ordering care.
 
 ## Build 42 traits and professions: how they actually work
 
@@ -280,6 +304,8 @@ body damage, moodles. Project Zomboid simulates that client-side even in multipl
 there is no `server/` counterpart and no command protocol. The one thing that would need `server/` is anything
 deciding *world* state, and no trait here does. Colour Blind comes closest and is single-player-gated for exactly that
 reason.
+
+**One update loop, and it lives in `shared/` for load-order reasons** - see the section above before moving it.
 
 **Two primitives are shared, and both exist because two traits wanted the same thing.**
 
