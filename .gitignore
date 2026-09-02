@@ -13,3 +13,7 @@ desktop.ini
 # versioned, under SHAW/42/media/.
 Assets/
 __pycache__/
+
+# Steam Workshop store copy. Kept local: it is store-page content, not
+# something the mod loads, and it changes independently of the code.
+workshop_description.txt
